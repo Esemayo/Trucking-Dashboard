@@ -1,0 +1,46 @@
+raw data 
+   work days 
+   loads
+   fuel purchases
+   truck movement
+events
+    work shift
+    load delivered 
+    fuel purchase 
+    odometer changed
+attributes of events 
+
+
+repeated patterns
+    what repeats multiple times per day-  loads 
+    what happens once per day - the work day only starts once per day and also fuel is usually purchased once per day
+        odometer is also tracked once per day
+    what happens occasionally - this is a new field but id like to start including maintenace in this section
+
+
+what should the system revolve around
+   work days 
+       pros
+       1.loads, fuel purchases, maintenace all take place inside a workday so we can track them in a work day
+       2.we already track our data by days
+       cons
+       1.loads get lumped together to one day which would make us lose capabilitys to track rate load miles and fuel 
+       2.
+    loads
+       pros
+       1.provide us with the opportunity to list all the data in each load like fuel purchases rate and distance
+       2.loads repeat often enough where tracking this data is a neccesity
+       cons
+       1.lose capability to sort by week bu it seems we can work around this
+Main record will be loads 
+why
+1.losing info about loads by grouping them to one line under days will lose too much important data 
+2.our revenue stream is from loads we cant lose any data from the metric that makes our whole company
+
+                #######objective for tomorow 
+                finalize main record
+                list raw input fields
+                convert our notes here to structured csv
+                build our first parser
+loads raw fields
+    
