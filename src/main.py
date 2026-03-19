@@ -44,8 +44,6 @@ def main():
     inserted = 0
     skipped = 0
     rows = load_csv(input_file)
-    cursor.execute("DELETE FROM loads")
-    conn.commit
     for row in rows:  
         cleaned_row, error = clean_row(row)
         if error:
@@ -71,6 +69,8 @@ def main():
     conn.commit()
         
 main()
-#current status- works great but we have issues with duplicates 
-#tomorows objective - change the table to include all our actual fields and start adding calculated metrics
+#current status: CSV -> validation -> SQlite insert working 
+#known issue: duplicate rows on reruns (no uniqueness constriants yet)
+#next step: redesign schema with real fields + metrics
+
 
