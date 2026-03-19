@@ -1,21 +1,33 @@
 import csv
+import sqlite3
+conn = sqlite3.connect("data/trucking.db")
+cursor = conn.cursor()
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS loads(
+        id INTEGER PRIMARY KEY,
+        miles INTEGER,
+        rate REAL,
+        fuel REAL
+);
+""") 
 def load_csv(file_path):
     with open(file_path, "r") as file:
         reader = csv.DictReader(file)
         rows = list(reader)
     return rows
 def clean_row(row):
-    if row['miles'] == '0': 
-        return None
-    if row['miles'] == '' or row['rate'] == '' or row['fuel'] == '':
-        return None
+    if row['miles'] <= '0': 
+        return None, "Miles is zero"
+    for field in ["miles", "rate", "fuel"]:
+        if row[field] == "":
+            return None, f"empty field: {field}"
     try:                             
         miles = float(row["miles"]) 
         rate = float(row["rate"]) 
         fuel = float(row["fuel"]) 
     except ValueError: 
-        return None     
-    return row
+        return None, "Field is not numeric"   
+    return row, None
 def calculate_metrics(row):
     miles = float(row["miles"]) 
     rate = float(row["rate"]) 
@@ -27,23 +39,38 @@ def calculate_metrics(row):
     row["fuel_cost_per_mile"] = fuel_cost_per_mile  
     row["net_after_fuel"] = net_after_fuel
     return row 
-def write_csv(file_path, rows):
-    fieldnames = rows[0].keys()
-    with open(file_path, mode='w') as file: 
-        writer = csv.DictWriter(file, fieldnames) 
-        writer.writeheader() 
-        writer.writerows(rows)
-    pass
 def main():
-    input_file = "data/sample_loads_messy.csv"
-    output_file = "data/processed_loads.csv"
-    processed_rows =[]
+    input_file = "data/sample_loads.csv"
+    inserted = 0
+    skipped = 0
     rows = load_csv(input_file)
-    for row in rows:
-        cleaned = clean_row(row)
-        if not cleaned:
+    cursor.execute("DELETE FROM loads")
+    conn.commit
+    for row in rows:  
+        cleaned_row, error = clean_row(row)
+        if error:
+            skipped += 1
+            print(f"Skipped row with date {row['date']} skipped: {error}")
             continue
-        processed = calculate_metrics(cleaned)
-        processed_rows.append(processed)
-    write_csv(output_file, processed_rows)
+        values = (
+            cleaned_row["miles"],
+            cleaned_row["rate"],
+            cleaned_row["fuel"]
+        )
+        cursor.execute("""
+        INSERT INTO loads (
+            miles,
+            rate,
+            fuel
+        )  
+        VALUES (?, ?, ?)
+        """, values)
+        inserted += 1   
+    print(f"Inserted: {inserted}")
+    print(f"Skipped: {skipped}")
+    conn.commit()
+        
 main()
+#current status- works great but we have issues with duplicates 
+#tomorows objective - change the table to include all our actual fields and start adding calculated metrics
+
