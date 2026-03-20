@@ -3,7 +3,7 @@ from datetime import datetime
 import sqlite3
 conn = sqlite3.connect("data/trucking.db")
 cursor = conn.cursor()
-cursor.execute("DROP TABLE IF EXISTS loads")###reset table
+#cursor.execute("DROP TABLE IF EXISTS loads")###reset table
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS loads(
         id INTEGER PRIMARY KEY,
@@ -97,9 +97,7 @@ def main():
     conn.commit()
         
 main()
-#current status: CSV -> validation -> SQlite insert not working need to add load_sequence 
-#known issue: duplicate rows on reruns (no uniqueness constriants yet)
-#tommorows objective validate load sequence update sql inserts to match new columns
-#next step: redesign schema with real fields + metrics
+#current status: CSV -> validation -> SQlite insert  
+#next step: redesign schema with real metrics
 
 
