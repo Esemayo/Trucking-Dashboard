@@ -3,7 +3,7 @@ from datetime import datetime
 import sqlite3
 conn = sqlite3.connect("data/trucking.db")
 cursor = conn.cursor()
-#cursor.execute("DROP TABLE IF EXISTS loads")###reset table
+cursor.execute("DROP TABLE IF EXISTS loads")###reset table for testing
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS loads(
         id INTEGER PRIMARY KEY,
@@ -51,17 +51,33 @@ def clean_row(row):
         load_sequence = int(row["load_sequence"])
     except ValueError: 
         return None, "Field is not numeric"   
+    row["miles"] = miles
+    row["rate"] = rate
+    row["load_sequence"] = load_sequence
     return row, None
 def calculate_metrics(row):
-    miles = float(row["miles"]) 
-    rate = float(row["rate"])  
-    rate_per_mile = rate/miles 
+    miles = row["miles"] 
+    rate = row["rate"]
+    cost_per_mile = 2.40 
+    threshold = 0.30
+    rate_per_mile = rate/miles
+    profit_per_mile = rate_per_mile - cost_per_mile 
     row["rate_per_mile"] = rate_per_mile
+    row["profit_per_mile"] = profit_per_mile
+    if profit_per_mile > threshold:
+        row["message"] = "Profitable"
+    elif profit_per_mile > 0:
+        row["message"] = "Barely profitable"
+    else:
+        row["message"] = "Losing"
     return row 
 def main():
     input_file = "data/sample_loads.csv"
     inserted = 0
     skipped = 0
+    print("_" * 90)
+    print("Load Summary")
+    print("_" * 90)
     rows = load_csv(input_file)
     for row in rows:  
         cleaned_row, error = clean_row(row)
@@ -69,6 +85,7 @@ def main():
             skipped += 1
             print(f"Skipped row with date {row['date']} skipped: {error}")
             continue
+        cleaned_row = calculate_metrics(cleaned_row)
         values = (
             cleaned_row["date"],
             cleaned_row["load_type"],
@@ -88,6 +105,8 @@ def main():
             VALUES (?, ?, ?, ?, ?)
             """, values)
             inserted += 1
+            print(f"Date: {cleaned_row["date"]} |seq: {cleaned_row["load_sequence"]} |rate: {cleaned_row["rate"]:.0f} |miles: {cleaned_row["miles"]:.0f} |rate/mi: {cleaned_row["rate_per_mile"]:.2f} |profit/mi : {cleaned_row["profit_per_mile"]:.2f} |{cleaned_row["message"]}")
+
         except sqlite3.IntegrityError:
             skipped += 1
             print(f"Skipped duplicate: date = {cleaned_row["date"]}  load_sequence = {cleaned_row['load_sequence']}")
@@ -98,6 +117,7 @@ def main():
         
 main()
 #current status: CSV -> validation -> SQlite insert  
-#next step: redesign schema with real metrics
+#Next step - store rate_per_mile, profit_oer_mile, and message into database for querying profitablity
+
 
 
