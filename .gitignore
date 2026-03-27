@@ -1,4 +1,7 @@
 __pycache__/
 .DS_Store
 src/scratchpad
-data/trucking.db
+data/*.csv
+!data/sample_loads.csv
+!data/sample_loads_messy.csv
+data/*.db

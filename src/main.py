@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS loads(
         load_sequence INTEGER, 
         miles INTEGER,
         rate REAL,
+        rate_per_mile,
+        profit_per_mile,
         UNIQUE(date, load_sequence)
 );
 """) 
@@ -38,8 +40,6 @@ def clean_row(row):
     row["load_type"] = load_type
     if row["load_sequence"] == "":
         return None, "load sequence is empty"
-    if row['miles'] <= '0': 
-        return None, "Miles is zero"
     if row['rate'] == "":
         return None, "rate is empty"
     for field in ["miles", "rate"]:
@@ -50,7 +50,9 @@ def clean_row(row):
         rate = float(row["rate"]) 
         load_sequence = int(row["load_sequence"])
     except ValueError: 
-        return None, "Field is not numeric"   
+        return None, "Field is not numeric"  
+    if miles <= 0: 
+        return None, "Miles must be greater then 0" 
     row["miles"] = miles
     row["rate"] = rate
     row["load_sequence"] = load_sequence
@@ -58,18 +60,11 @@ def clean_row(row):
 def calculate_metrics(row):
     miles = row["miles"] 
     rate = row["rate"]
-    cost_per_mile = 2.40 
-    threshold = 0.30
+    cost_per_mile = 7.00 
     rate_per_mile = rate/miles
     profit_per_mile = rate_per_mile - cost_per_mile 
     row["rate_per_mile"] = rate_per_mile
     row["profit_per_mile"] = profit_per_mile
-    if profit_per_mile > threshold:
-        row["message"] = "Profitable"
-    elif profit_per_mile > 0:
-        row["message"] = "Barely profitable"
-    else:
-        row["message"] = "Losing"
     return row 
 def main():
     input_file = "data/sample_loads.csv"
@@ -91,7 +86,9 @@ def main():
             cleaned_row["load_type"],
             cleaned_row["load_sequence"],
             cleaned_row["miles"],
-            cleaned_row["rate"]
+            cleaned_row["rate"],
+            cleaned_row["rate_per_mile"],
+            cleaned_row["profit_per_mile"]
         )
         try:
             cursor.execute("""
@@ -100,13 +97,13 @@ def main():
                 load_type,
                 load_sequence,
                 miles,
-                rate
+                rate,
+                rate_per_mile,
+                profit_per_mile
             )  
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """, values)
             inserted += 1
-            print(f"Date: {cleaned_row["date"]} |seq: {cleaned_row["load_sequence"]} |rate: {cleaned_row["rate"]:.0f} |miles: {cleaned_row["miles"]:.0f} |rate/mi: {cleaned_row["rate_per_mile"]:.2f} |profit/mi : {cleaned_row["profit_per_mile"]:.2f} |{cleaned_row["message"]}")
-
         except sqlite3.IntegrityError:
             skipped += 1
             print(f"Skipped duplicate: date = {cleaned_row["date"]}  load_sequence = {cleaned_row['load_sequence']}")
@@ -116,8 +113,8 @@ def main():
     conn.commit()
         
 main()
-#current status: CSV -> validation -> SQlite insert  
-#Next step - store rate_per_mile, profit_oer_mile, and message into database for querying profitablity
+#current status: CSV -> validation -> SQlite insert -> database querys 
+#Next step - continue adding to querys to allow a full picture of profitability
 
 
 
