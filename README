@@ -1,7 +1,26 @@
-Messy Trucking Load Data
-         ↓       
-Data Cleaning & Validation
-         ↓
-Profitability Calculations
-         ↓
-Processed Dataset Output
+Trucking Profitability Dashboard
+
+This project processes load info, cleans and validates it, stores it into a database and runs queries to analyze profitablity.
+
+It is designed to track real world operations and support better load decisions.
+
+Pipeliine
+
+Raw Load Data (CSV)
+        v
+Data cleaning & validation 
+        v
+Metrics Calculation (rate/mile, profit/mile)
+        v
+Database Storage (SQLite)
+        v
+Query Analysis (profit by load type, totals etc)
+
+Key Features
+-Handles messy real world data (invalid inputs bad values)
+-Calculates profitability metrics per load 
+-Stores dta persistently into SQLite
+-Runs queries to analyze performance by load type
+-Designed to scale with real operational date
+
+Note: Real business data in not included in this repo sample datasets are provided for demonstration purposes.
