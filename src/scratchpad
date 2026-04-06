@@ -1,46 +1,35 @@
-raw data 
-   work days 
-   loads
-   fuel purchases
-   truck movement
-events
-    work shift
-    load delivered 
-    fuel purchase 
-    odometer changed
-attributes of events 
+V1.5
+we will now implement a 2 table system so we can now include fuel consumption per load and cost
+loads 
+-date
+-load type
+-load sequence 
+-miles
+-rate
+calculated in loads
+-rate per mile
+-profit per mile
 
+tomorrows objective write the schema for fuel table
+fields:
+table name:fuel_purchases
+                -fuel_id INTEGER, required
+                -purchase_date TEXT, required
+                -gallons REAL, required
+                -total_cost REAL, required
+                -odometer REAL optional
+                UNIQUE fuel id
+how we track:
+    -store reciepts after fueling up then do a block to store the data on loads and fuel also we write down odometer reading after fueling
+validations:
+    -gallons>0
+    -total_cost>0
+    odometer>=0 if present
+    odometer missing insert null
+    date- same format as loads table
+metrics- were going to add price per gallon 
+    price_per_gallon = total_cost / gallons
+    and we willl be storing it to track changs over time
 
-repeated patterns
-    what repeats multiple times per day-  loads 
-    what happens once per day - the work day only starts once per day and also fuel is usually purchased once per day
-        odometer is also tracked once per day
-    what happens occasionally - this is a new field but id like to start including maintenace in this section
-
-
-what should the system revolve around
-   work days 
-       pros
-       1.loads, fuel purchases, maintenace all take place inside a workday so we can track them in a work day
-       2.we already track our data by days
-       cons
-       1.loads get lumped together to one day which would make us lose capabilitys to track rate load miles and fuel 
-       2.
-    loads
-       pros
-       1.provide us with the opportunity to list all the data in each load like fuel purchases rate and distance
-       2.loads repeat often enough where tracking this data is a neccesity
-       cons
-       1.lose capability to sort by week bu it seems we can work around this
-Main record will be loads 
-why
-1.losing info about loads by grouping them to one line under days will lose too much important data 
-2.our revenue stream is from loads we cant lose any data from the metric that makes our whole company
-
-                #######objective for tomorow 
-                finalize main record
-                list raw input fields
-                convert our notes here to structured csv
-                build our first parser
-loads raw fields
-    
+TOMMOROWS OBJECTIVE:
+    -stregthen loads table by adding check null or not null to the db insert to defend against any bad data

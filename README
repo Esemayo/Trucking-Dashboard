@@ -1,26 +1,47 @@
 Trucking Profitability Dashboard
 
-This project processes load info, cleans and validates it, stores it into a database and runs queries to analyze profitablity.
+This project helps a small trucking operation decide which loads to take by calculating true profit per mile using both fixed and fuel costs.
 
-It is designed to track real world operations and support better load decisions.
+Pipeline
 
-Pipeliine
-
-Raw Load Data (CSV)
-        v
-Data cleaning & validation 
-        v
-Metrics Calculation (rate/mile, profit/mile)
-        v
-Database Storage (SQLite)
-        v
-Query Analysis (profit by load type, totals etc)
-
+1. Raw load & fuel data (CSV input)
+2. Data cleaning & validation (handles invalid and messy inputs)
+3. Metrics calculation:
+-Rate per mile
+-Profit per mile
+-Fuel cost per mile
+4. Database Storage (SQLite)
+5. Query analysis:
+-Profit by load type
+-Daily performance 
+-Load-level profitability classification
 Key Features
--Handles messy real world data (invalid inputs bad values)
--Calculates profitability metrics per load 
--Stores dta persistently into SQLite
--Runs queries to analyze performance by load type
--Designed to scale with real operational date
+- Handles messy real-world data (invalid values, formatting issues)
+- Calculates true profitability using both fixed and fuel-based costs
+- Stores structured data in SQLite for fast querying
+- Provides actionable insights for load selection decisions
+- Separates data pipeline, metrics, and query logic for scalability
+
+Example Output(Used to evaluate load profitability and daily performance)
+Type         Average Profit/Mi     Total Profit        Load count
+______________________________________________________________________
+scrap      |  13.01          |      765.42 |            7
+rebar      |  2.86           |      326.74 |            3
+______________________________________________________________________
+Date         Miles/Day             Total profit/day    Avg Profit/mile/day
+______________________________________________________________________
+2026-04-10  | 32       |           453.12 |            14.16
+2026-03-10  | 144      |           639.04 |             4.44
+
+Analysis:
+-Scrap loads should be prioritized over rebar due to significantly higher profit per mile
+-Enables operators to reject low-profit loads that appear profitable on the surface
+
+Future Improvements
+
+- Build a frontend dashboard so non-technical operators can use the system without touching code
+- Automate CSV uploads and processing
+- Add historical trend tracking
+- Improve cost modeling with dynamic fuel and maintenance inputs
 
 Note: Real business data in not included in this repo sample datasets are provided for demonstration purposes.

@@ -3,5 +3,5 @@ __pycache__/
 src/scratchpad
 data/*.csv
 !data/sample_loads.csv
-!data/sample_loads_messy.csv
+!data/sample_*.csv
 data/*.db
