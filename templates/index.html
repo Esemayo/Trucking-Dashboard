@@ -1,10 +1,55 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Trucking Dashboard</title>
+    <title>Load Profitability Dashboard</title>
+    <style>
+    table {
+        border-collapse: collapse;
+    }
+    th, td{
+        padding: 8px;
+    }
+    td:nth-child(5),td:nth-child(6) {
+        text-align: right;
+    }
+    th:nth-child(5),th:nth-child(6) {
+        text-align: right;
+    }
+    </style>
 </head>
 <body>
-    <h1>Overview</h1>
-    <p>Today's Profit: {{ profit }}</p>
+    <h1>Load Profitability Dashboard</h1>
+    <h2>Overview</h2>
+    <p>Date: {{ date }}</p>
+    <p>Today's Profit: {{ total_profit }}</p>
+    <p>Miles Driven For The Day: {{ daily_miles }}</p>
+    <p>Loads Done for the Day: {{ load_count }}</p>
+    <p>Avg Profit Per Mile: {{ avg_profit_per_mile }}</p>
+<hr>
+    <h2>Loads Table</h2>
+<table>
+    <tr>
+        <th>Date</th>
+        <th>Load Type</th>
+        <th>Load Sequence</th>
+        <th>Miles</th>
+        <th>Rate</th>
+        <th>Profit Per Mile</th>
+        <th>Status</th>
+    </tr>
+    {% for load in loads_data %}
+    <tr>
+        <td>{{ load.date }}</td>
+        <td>{{ load.load_type }}</td>
+        <td>{{ load.load_sequence }}</td>
+        <td>{{ load.miles }}</td>
+        <td>{{ "%.2f"|format(load.rate) }}</td>
+        <td>{{ "%.2f"|format(load.ppm) }}</td>
+        <td>{{ load.status }}</td>
+    </tr>
+    {% endfor %}
+
+</table
+
 </body>
 </html>
