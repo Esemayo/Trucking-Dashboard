@@ -30,26 +30,33 @@ def get_recent_loads():
         })
     conn.close()
     return loads_data
-#cursor.execute("""
-#SELECT
-    #load_type,
-    #AVG(profit_per_mile),
-    #SUM(profit_per_mile * miles),
-    #COUNT(*)
-#FROM loads
-#GROUP BY load_type
-#ORDER BY SUM(profit_per_mile * miles) DESC, AVG(profit_per_mile) DESC, COUNT(*) DESC;
-#""")
-#rows = cursor.fetchall()
-#print("_" * 70)
-#print("Type         Average Profit/Mi     Total Profit        Load count")
-#print("_" * 70)
-#for row in rows:
-#    load_type, avg_profit, sum_profit, count = row
-#    print(f"{load_type:<10} |  {avg_profit:<14.2f} |  {sum_profit:>10.2f} | {count:>12}")
-#print("_" * 70)
-#print("Date         Miles/Day             Total profit/day    Avg Profit/mile/day")
-#print("_" * 70)
+def get_load_performance():
+    conn = sqlite3.connect("data/trucking.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT
+        load_type,
+        AVG(profit_per_mile),
+        SUM(profit_per_mile * miles),
+        SUM(profit_per_mile * miles) / SUM(miles),
+        SUM(miles)
+    FROM loads
+    GROUP BY load_type
+    ORDER BY SUM(profit_per_mile * miles) DESC, AVG(profit_per_mile) DESC;
+    """)
+    rows = cursor.fetchall()
+    performance_data = []
+    for row in rows:
+        load_type, avg_profit, total_profit, weighted_ppm, total_miles = row
+        performance_data.append({
+            "load_type": load_type,
+            "avg_profit": avg_profit,
+            "total_profit": total_profit,
+            "weighted_ppm": weighted_ppm,
+            "total_miles": total_miles
+        })
+    conn.close()
+    return performance_data
 def daily_summary():
     conn = sqlite3.connect("data/trucking.db")
     cursor = conn.cursor()
@@ -69,14 +76,18 @@ def recent_fuel_mpg(cursor):
     conn = sqlite3.connect("data/trucking.db")
     cursor = conn.cursor()
     cursor.execute("""
-    SELECT purchase_date, gallons, odometer, cost_per_gallon
+    SELECT 
+        purchase_date,
+        gallons,
+        odometer,
+        cost_per_gallon
     FROM fuel_purchases
     ORDER BY purchase_date DESC, odometer DESC
     LIMIT 2;
     """)
     rows = cursor.fetchall()
     if len(rows) < 2:
-        print("Not enough fuel data to claculate MPG")
+        print("Not enough fuel data to calculate MPG")
         return
     current = rows[0]
     previous = rows[1]

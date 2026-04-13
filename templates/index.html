@@ -15,6 +15,19 @@
     th:nth-child(5),th:nth-child(6) {
         text-align: right;
     }
+    .bad {
+        color: red;
+    }
+    .okay {
+        color: orange; 
+    }
+    .good {
+        color: green;
+    }
+    .great {
+        color: lime;
+        font-weight: bold;
+    }
     </style>
 </head>
 <body>
@@ -24,9 +37,45 @@
     <p>Today's Profit: {{ total_profit }}</p>
     <p>Miles Driven For The Day: {{ daily_miles }}</p>
     <p>Loads Done for the Day: {{ load_count }}</p>
-    <p>Avg Profit Per Mile: {{ avg_profit_per_mile }}</p>
+    <p>Avg Profit Per Mile: {{ "%.2f"|format(avg_profit_per_mile) }}</p>
 <hr>
-    <h2>Loads Table</h2>
+    <h2 class="{{ day_status }}">
+        {% if day_status == "bad" %}
+            ❌ weak Day
+        {% elif day_status == "okay" %}
+            ⚠️ Okay Day
+        {% elif day_status == "good" %}
+            ✅ Good Day
+        {% else %}
+            🔥 Great Day
+        {% endif %}
+
+    </h2>
+<hr>
+    <h3>Load Performance</h3>
+<table>
+    <tr></tr>
+        <th>Load Type</th>
+        <th>Avg PPM</th>
+        <th>Total Profit</th>
+        <th>Weighted PPM</th>
+        <th>Total Miles</th>
+    </tr>
+        {% for row in load_performance %}
+    <tr>
+         <td>{{ row["load_type"] }}</td>
+         <td>{{ "%.2f"|format(row["avg_profit"]) }}</td>
+         <td>{{ row["total_profit"] }}</td>
+         <td>{{ "%.2f"|format(row["weighted_ppm"]) }}</td>
+         <td>{{ row["total_miles"] }}</td>
+    </tr>
+        {% endfor %}
+</table>
+<hr>
+    <h4>Load Performance Summary</h4>
+    <p>Best Load Type by Volume: {{ best_volume }}</p>
+    <p>Best Loads By Efficiency: {{ best_efficiency }}</p>
+    <h5>Recent Loads</h5>
 <table>
     <tr>
         <th>Date</th>

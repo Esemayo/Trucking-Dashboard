@@ -36,9 +36,10 @@ def main():
             skipped += 1
             print(f"Skipped duplicate: date = {cleaned_row["purchase_date"]}")
             continue 
+    conn.commit()
     print(f"Inserted: {inserted}")
     print(f"Skipped: {skipped}")
-    input_file = "data/sample_loads.csv"
+    input_file = "data/real_loads.csv"
     inserted = 0
     skipped = 0
     print("_" * 90)
