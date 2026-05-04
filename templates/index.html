@@ -15,6 +15,15 @@
     th:nth-child(5),th:nth-child(6) {
         text-align: right;
     }
+    .status-profit {
+        background-color: #d4edda;
+    }
+    .status-barely {
+        background-color: #ffe5b4;
+    }
+    .status-loss {
+        background-color: #f8d7da;
+    }
     .bad {
         color: red;
     }
@@ -32,9 +41,37 @@
 </head>
 <body>
     <h1>Load Profitability Dashboard</h1>
-    <h2>Overview</h2>
+    <form action="/run_pipeline" method="post">
+        <button type="submit">Run Pipeline</button>
+    </form>
+        {% if pipeline_results %}
+            <h2>Pipeline Results</h2>
+            <p>Fuel Inserted: {{ pipeline_results["fuel_summary"]["inserted"] }}</p>
+            <p>Fuel Validation Errors: {{ pipeline_results["fuel_summary"]["validation_errors"] }}</p>
+            <p>Fuel Duplicates Skipped: {{ pipeline_results["fuel_summary"]["duplicates"] }}</p>
+            {% if pipeline_results["fuel_summary"]["error_details"] %}
+                <h3>Fuel Validation Error Details</h3>
+                <ul>
+                {% for error in pipeline_results["fuel_summary"]["error_details"] %}
+                   <li>{{ error["date"] }} - {{ error["reason"] }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+            <p>Loads Inserted: {{ pipeline_results["load_summary"]["inserted"] }}</p>
+            <p>Load Validation Errors: {{ pipeline_results["load_summary"]["validation_errors"] }}</p>
+            <p>Load Duplicates Skipped: {{ pipeline_results["load_summary"]["duplicates"] }}</p>
+            {% if pipeline_results["load_summary"]["error_details"] %}
+                <h3>Load Validation Error Details</h3>
+                <ul>
+                {% for error in pipeline_results["load_summary"]["error_details"] %}
+                   <li>{{ error["date"] }} - {{ error["reason"] }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endif %}
+    <h2>Todays Overview</h2>
     <p>Date: {{ date }}</p>
-    <p>Today's Profit: {{ total_profit }}</p>
+    <p>Today's Profit: {{"%.2f"|format(total_profit) }}</p>
     <p>Miles Driven For The Day: {{ daily_miles }}</p>
     <p>Loads Done for the Day: {{ load_count }}</p>
     <p>Avg Profit Per Mile: {{ "%.2f"|format(avg_profit_per_mile) }}</p>
@@ -51,31 +88,76 @@
         {% endif %}
 
     </h2>
+
 <hr>
-    <h3>Load Performance</h3>
-<table>
-    <tr></tr>
-        <th>Load Type</th>
-        <th>Avg PPM</th>
-        <th>Total Profit</th>
-        <th>Weighted PPM</th>
-        <th>Total Miles</th>
-    </tr>
-        {% for row in load_performance %}
-    <tr>
-         <td>{{ row["load_type"] }}</td>
-         <td>{{ "%.2f"|format(row["avg_profit"]) }}</td>
-         <td>{{ row["total_profit"] }}</td>
-         <td>{{ "%.2f"|format(row["weighted_ppm"]) }}</td>
-         <td>{{ row["total_miles"] }}</td>
-    </tr>
-        {% endfor %}
-</table>
+    <h2>Money Leaks 🚨</h2>
+    {% for row in load_performance %}
+        {% if row["weighted_ppm"] < 0 %}
+            <p>
+                ❌ {{ row["load_type"] }} is losing money:
+                ${{ "%.2f"|format(row["weighted_ppm"])}} per mile
+            </p>
+        {% endif %}
+    {% endfor %}
 <hr>
-    <h4>Load Performance Summary</h4>
-    <p>Best Load Type by Volume: {{ best_volume }}</p>
-    <p>Best Loads By Efficiency: {{ best_efficiency }}</p>
-    <h5>Recent Loads</h5>
+<div style="display: flex; gap: 40px; align-items: flex-start;">
+
+    <div>
+        <h2>All Time Load Performance</h2>
+        <table>
+            <tr>
+                <th>Load Type</th>
+                <th>Avg PPM</th>
+                <th>Total Profit</th>
+                <th>Weighted PPM</th>
+                <th>Total Miles</th>
+            </tr>
+                {% for row in load_performance %}
+            <tr>
+                <td>{{ row["load_type"] }}</td>
+                <td>{{ "%.2f"|format(row["avg_profit"]) }}</td>
+                <td>{{ "%.2f"|format(row["total_profit"]) }}</td>
+                <td>{{ "%.2f"|format(row["weighted_ppm"]) }}</td>
+                <td>{{ row["total_miles"] }}</td>
+            </tr>
+                {% endfor %}
+        </table>
+    </div>
+    <div>
+        <h2>Load  Calculator</h2>
+        <form action="/calculate_load" method="POST">
+
+            <input
+                type="number"
+                name="miles"
+                id="miles"
+                step="any"
+                placeholder="Enter Miles"
+                value="{{ request.form.get('miles', '') }}"
+            >
+             <input
+                type="number"
+                name="rate"
+                id="rate"
+                step="any"
+                placeholder="Enter Rate"
+                value="{{ request.form.get('rate', '') }}"
+            >
+            <button type="submit">Calculate</button>
+        </form>
+            {% if calc_result %}
+                <p>Type: {{ calc_result["load_type"] }}</p>
+                <p>Miles: {{ calc_result["miles"] }}</p>
+                <p>Rate Per Mile: {{ "%.2f"|format(calc_result["rate_per_mile"]) }}</p>
+                <p>All in Profit Per Mile(After all costs): {{ "%.2f"|format(calc_result["net_profit_per_mile"]) }}</p>
+                <p>Decision Profit: {{ "%.2f"|format(calc_result["decision_profit"]) }}</p>
+                <p>Take Home Profit Per Mile(This load only): {{ "%.2f"|format(calc_result["decision_rpm"]) }}</p>
+
+            {% endif %}
+    </div> 
+</div>
+
+    <h2>Recent Loads</h2>
 <table>
     <tr>
         <th>Date</th>
@@ -87,7 +169,7 @@
         <th>Status</th>
     </tr>
     {% for load in loads_data %}
-    <tr>
+    <tr class="status-{{ load.status|lower}}">
         <td>{{ load.date }}</td>
         <td>{{ load.load_type }}</td>
         <td>{{ load.load_sequence }}</td>

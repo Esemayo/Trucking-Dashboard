@@ -1,35 +1,47 @@
-V1.5
-we will now implement a 2 table system so we can now include fuel consumption per load and cost
-loads 
--date
--load type
--load sequence 
--miles
--rate
-calculated in loads
--rate per mile
--profit per mile
+flask data entry refactor 
 
-tomorrows objective write the schema for fuel table
-fields:
-table name:fuel_purchases
-                -fuel_id INTEGER, required
-                -purchase_date TEXT, required
-                -gallons REAL, required
-                -total_cost REAL, required
-                -odometer REAL optional
-                UNIQUE fuel id
-how we track:
-    -store reciepts after fueling up then do a block to store the data on loads and fuel also we write down odometer reading after fueling
-validations:
-    -gallons>0
-    -total_cost>0
-    odometer>=0 if present
-    odometer missing insert null
-    date- same format as loads table
-metrics- were going to add price per gallon 
-    price_per_gallon = total_cost / gallons
-    and we willl be storing it to track changs over time
+step 1: new route in app.py 
+@app.route("add/load", methods=["GET", "POST"])
+def add_load():
 
-TOMMOROWS OBJECTIVE:
-    -stregthen loads table by adding check null or not null to the db insert to defend against any bad data
+step 2: GET request:
+load_sequence shall be calculated by the app
+date
+load_type
+miles
+rate
+
+step 3: post request:backend recieves form data:
+
+date = request.form.get("date")
+load_type = request.form.get("load_type")
+miles = request.form.get("miles")
+rate = request.form.get("rate")
+
+step 4 generate load_sequence:
+create a query that generates the load sequence for that date 
+
+SELECT MAX(load_sequence)
+FROM loads
+WHERE date = ?
+next_sequence = max_sequence + 1
+if no loads next_sequence = 1 
+
+Step 5: Create a row dictionary to clean up my data:
+
+row = {
+    "date": date,
+    "load_type": load_type
+    "load_sequence": next_sequence,
+    "miles": miles,
+    "rate": rate
+}
+
+step 6: use a db helper to insert clean data 
+
+insert_load(conn, cleaned_row)
+
+step 7: redirect
+return redirect(url_for("home"))
+
+step 8: error handling if validation fails: stay on form show error message and no inserts

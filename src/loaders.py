@@ -1,6 +1,6 @@
 import csv
 def load_csv(file_path):
-    with open(file_path, "r") as file:
+    with open(file_path, newline="", encoding="utf-8-sig") as file:
         reader = csv.DictReader(file)
-        rows = list(reader)
-    return rows
+        for row in reader:
+            yield row

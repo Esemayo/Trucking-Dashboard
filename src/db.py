@@ -13,10 +13,11 @@ def create_tables(conn):
             miles INTEGER,
             rate REAL,
             rate_per_mile,
-            profit_per_mile,
+            net_profit_per_mile,
             UNIQUE(date, load_sequence)
     );
     """) 
+    print("Creating Tables")
     cursor.execute("DROP TABLE IF EXISTS fuel_purchases;")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS fuel_purchases(
@@ -25,7 +26,8 @@ def create_tables(conn):
                 gallons REAL,
                 total_cost REAL,
                 odometer INTEGER,
-                cost_per_gallon REAL
+                cost_per_gallon REAL,
+                UNIQUE(purchase_date, odometer)
     );
     """)
 def insert_load(conn, row):
@@ -37,7 +39,7 @@ def insert_load(conn, row):
             row["miles"],
             row["rate"],
             row["rate_per_mile"],
-            row["profit_per_mile"]
+            row["net_profit_per_mile"]
     )
     cursor.execute("""
     INSERT INTO loads (
@@ -47,7 +49,7 @@ def insert_load(conn, row):
         miles,
         rate,
         rate_per_mile,
-        profit_per_mile
+        net_profit_per_mile
     )  
     VALUES (?, ?, ?, ?, ?, ?, ?)
     """, values)

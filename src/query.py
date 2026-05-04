@@ -4,7 +4,7 @@ def get_recent_loads():
     conn = sqlite3.connect("data/trucking.db")
     cursor = conn.cursor()
     cursor.execute("""
-    SELECT date, load_type, load_sequence, miles, rate, profit_per_mile 
+    SELECT date, load_type, load_sequence, miles, rate, net_profit_per_mile 
     FROM loads
     ORDER BY date DESC, load_sequence DESC
     LIMIT 10;
@@ -12,10 +12,10 @@ def get_recent_loads():
     rows = cursor.fetchall()
     loads_data = []
     for row in rows:
-        date, load_type, load_sequence, miles, rate, profit_per_mile = row
-        if profit_per_mile > 0.30:
+        date, load_type, load_sequence, miles, rate, net_profit_per_mile = row
+        if net_profit_per_mile > 0.30:
             status = "Profit"
-        elif profit_per_mile >=0:
+        elif net_profit_per_mile >=0:
             status = "Barely" 
         else:
             status = "Loss"
@@ -25,7 +25,7 @@ def get_recent_loads():
             "load_sequence": load_sequence,
             "miles": miles,
             "rate": rate,
-            "ppm": profit_per_mile,
+            "ppm": net_profit_per_mile,
             "status": status
         })
     conn.close()
@@ -36,13 +36,13 @@ def get_load_performance():
     cursor.execute("""
     SELECT
         load_type,
-        AVG(profit_per_mile),
-        SUM(profit_per_mile * miles),
-        SUM(profit_per_mile * miles) / SUM(miles),
+        AVG(net_profit_per_mile),
+        SUM(net_profit_per_mile * miles),
+        SUM(net_profit_per_mile * miles) / SUM(miles),
         SUM(miles)
     FROM loads
     GROUP BY load_type
-    ORDER BY SUM(profit_per_mile * miles) DESC, AVG(profit_per_mile) DESC;
+    ORDER BY SUM(net_profit_per_mile * miles) DESC, AVG(net_profit_per_mile) DESC;
     """)
     rows = cursor.fetchall()
     performance_data = []
@@ -63,16 +63,16 @@ def daily_summary():
     cursor.execute("""
     SELECT
         date,
-        SUM(profit_per_mile * miles),
+        SUM(net_profit_per_mile * miles),
         SUM(miles),
         COUNT(*),
-        SUM(profit_per_mile * miles) / SUM(miles)
+        SUM(net_profit_per_mile * miles) / SUM(miles)
     FROM loads
     WHERE date = (SELECT MAX(date)FROM loads);
     """)
     row = cursor.fetchone()
     return row
-def recent_fuel_mpg(cursor):
+def recent_fuel_mpg(conn):
     conn = sqlite3.connect("data/trucking.db")
     cursor = conn.cursor()
     cursor.execute("""
@@ -88,19 +88,19 @@ def recent_fuel_mpg(cursor):
     rows = cursor.fetchall()
     if len(rows) < 2:
         print("Not enough fuel data to calculate MPG")
-        return
+        return None
     current = rows[0]
     previous = rows[1]
     current_purchase_date, current_gallons, current_odometer, current_cost_per_gallon = current
     previous_purchase_date, previous_gallons, previous_odometer, previous_cost_per_gallon = previous
     if current_odometer <= previous_odometer:
         print("Invalid odometer sequence for MPG calculations")
-        return
+        return None
     miles_driven, mpg, fuel_cost_per_mile = calculate_fuel_metrics(
         current_odometer,
         previous_odometer,
         current_gallons,
         current_cost_per_gallon
     )
-    return fuel_cost_per_mile
+    return (fuel_cost_per_mile, current_purchase_date)
 
