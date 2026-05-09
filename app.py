@@ -1,8 +1,11 @@
 from flask import Flask, render_template, redirect, url_for, request
-from src.query import get_recent_loads, daily_summary, get_load_performance, recent_fuel_mpg
+from src.query import get_recent_loads, daily_summary, get_load_performance, recent_fuel_mpg, get_next_load_sequence
 from src.main import run_pipeline
 from src.load_calculator import calculate_test_load
-from src.db import db_connection, create_tables
+from src.db import db_connection, create_tables, insert_load, insert_fuel
+from src.cleaners import clean_row, clean_row_fuel
+from src.metrics import load_metrics, get_fuel_cost_per_mile, calculate_cost_per_gallon
+import sqlite3
 app = Flask(__name__)
 app.secret_key = "dev"
 def classify_day(total_profit):
@@ -63,16 +66,98 @@ def calculate_load():
         **get_home_data()
 
     )
+# to do (make both add load and add feul data return the errors and stay in the insert page)
 @app.route("/add/load", methods=["GET", "POST"])
 def add_load():
     if request.method == "POST":
-        print(request.form)
+        date = request.form.get("date")
+        load_type = request.form.get("load_type")
+        miles = request.form.get("miles")
+        rate = request.form.get("rate")
+        row = {
+            "date": date,
+            "load_type": load_type,
+            "load_sequence": get_next_load_sequence(date),
+            "miles": miles,
+            "rate": rate
+        }
+        cleaned_row, error = clean_row(row)
+        if error:
+            print("Error:", error)
+            return render_template(
+                "add_load.html",
+                error=error,
+                form_data=row,
+                **get_home_data()
+            )
+        conn = db_connection()
+        fuel_cost_per_mile = get_fuel_cost_per_mile(
+            conn,
+            cleaned_row["date"]
+        )
+        cleaned_row = load_metrics(cleaned_row, fuel_cost_per_mile)
+        try:
+            insert_load(conn, cleaned_row)
+            conn.commit()
+        except sqlite3.IntegrityError:
+            return render_template(
+                "add_load.html",
+                error="Load entry already exists",
+                **get_home_data()
+            )
+        finally:
+            conn.close()
         return redirect(url_for("home"))
     return render_template(
         "add_load.html",
         error=None,
         **get_home_data()
     )
+#purchase_date,gallons,total_cost,odometer
+@app.route("/add/fuel", methods=["GET", "POST"])
+def add_fuel():
+    if request.method=="POST":
+        purchase_date = request.form.get("purchase_date")
+        gallons = request.form.get("gallons")
+        total_cost = request.form.get("total_cost")
+        odometer = request.form.get("odometer")
+        last_odometer = None
+        row = {
+            "purchase_date": purchase_date,
+            "gallons": gallons,
+            "total_cost": total_cost,
+            "total_cost": total_cost,
+            "odometer": odometer
+        }
+        cleaned_row_fuel, error = clean_row_fuel(row)
+        if error:
+            print("Error:", error)
+            return render_template(
+                "add_fuel.html",
+                error=error,
+                **get_home_data()
+            )
+        cleaned_row_fuel = calculate_cost_per_gallon(cleaned_row_fuel)
+        conn = db_connection()
+        try:
+            insert_fuel(conn, cleaned_row_fuel)
+            conn.commit()
+        except sqlite3.IntegrityError:
+            return render_template(
+                "add_fuel.html",
+                error="Fuel entry already exists",
+                **get_home_data()
+            )
+        finally:
+            conn.close()
+        return redirect(url_for("home"))
+    return render_template(
+        "add_fuel.html",
+        error=None,
+        **get_home_data()
+    )
+        
+            
 def get_home_data():
     summary_data = daily_summary()
     date, total_profit, daily_miles, load_count, avg_profit_per_mile = summary_data

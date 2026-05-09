@@ -3,7 +3,7 @@ from datetime import datetime
 from src.cleaners import clean_row, clean_row_fuel
 from src.db import db_connection, create_tables, insert_load, insert_fuel
 from src.loaders import load_csv
-from src.metrics import load_metrics, calculate_cost_per_gallon
+from src.metrics import load_metrics, calculate_cost_per_gallon, get_fuel_cost_per_mile
 from src.query import recent_fuel_mpg
 def process_fuel_file(conn, fuel_file):
     inserted = 0
@@ -72,7 +72,6 @@ def process_loads_file(conn, loads_file):
     print("Load Summary")
     print("_" * 90)
     rows = load_csv(loads_file)
-    fuel_result = recent_fuel_mpg(conn)
     for row in rows:  
         cleaned_row, error = clean_row(row)
         if error:
@@ -83,18 +82,10 @@ def process_loads_file(conn, loads_file):
                 "reason": error
             })
             continue
-        if fuel_result is None:
-            fuel_cost_per_mile = 2.00
-            print("WARNING: using placeholder fuel cost per mile = 2.00")
-        else:
-            fuel_cost_per_mile, fuel_date = fuel_result
-            load_date = cleaned_row["date"]
-            fuel_dt = datetime.strptime(fuel_date, "%Y-%m-%d").date()
-            load_dt = datetime.strptime(load_date, "%Y-%m-%d").date()
-            days_gap = (load_dt - fuel_dt).days
-            if days_gap > 7:
-                fuel_cost_per_mile = 2.00
-                print("WARNING: using placeholder fuel cost per mile = 2.00")
+        fuel_cost_per_mile = get_fuel_cost_per_mile(
+            conn,
+            cleaned_row["date"]
+        )
         cleaned_row = load_metrics(cleaned_row, fuel_cost_per_mile)
         try:
             insert_load(conn, cleaned_row)

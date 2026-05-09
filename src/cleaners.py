@@ -4,10 +4,14 @@ def clean_date(date_str):
     if date_str == "":
         return None, f"invalid date: {date_str}"
     try:
-        cleaned_date = datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
-        return cleaned_date, None
+        cleaned_date = datetime.strptime(date_str, "%Y-%m-%d").date()
     except ValueError:
         return None, f"invalid date: {date_str}"
+    if cleaned_date.year < 2020:
+        return None, "Date year is too old. Check the year"
+    if cleaned_date.year > 2030:
+        return None, "Date year is too far in the future. Check the year"
+    return cleaned_date.isoformat(), None
 def clean_row(row):
     cleaned_date, error = clean_date(row["date"])
     if error:

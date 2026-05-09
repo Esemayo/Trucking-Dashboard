@@ -1,3 +1,8 @@
+from src.query import recent_fuel_mpg 
+from src.cleaners import clean_row
+from src.db import db_connection
+from datetime import datetime
+import sqlite3
 def load_metrics(row, fuel_cost_per_mile):
     miles = row["miles"] 
     rate = row["rate"]
@@ -17,8 +22,16 @@ def calculate_cost_per_gallon(row):
     cost_per_gallon = total_cost / gallons
     row["cost_per_gallon"] = cost_per_gallon
     return row
-def calculate_fuel_metrics(current_odometer, previous_odometer, current_gallons, current_cost_per_gallon):
-    miles_driven = current_odometer - previous_odometer
-    mpg = miles_driven / current_gallons
-    fuel_cost_per_mile = current_cost_per_gallon / mpg
-    return miles_driven, mpg, fuel_cost_per_mile
+def get_fuel_cost_per_mile(conn, load_date):
+    fuel_result = recent_fuel_mpg(conn)
+    if fuel_result is None:
+            fuel_cost_per_mile = 2.00
+            print("WARNING: using placeholder fuel cost per mile = 2.00")
+    fuel_cost_per_mile, fuel_date = fuel_result
+    fuel_dt = datetime.strptime(fuel_date, "%Y-%m-%d").date()
+    load_dt = datetime.strptime(load_date, "%Y-%m-%d").date()
+    days_gap = (load_dt - fuel_dt).days
+    if days_gap > 7:
+        fuel_cost_per_mile = 2.00
+        print("WARNING: using placeholder fuel cost per mile = 2.00")
+    return fuel_cost_per_mile

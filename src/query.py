@@ -1,5 +1,4 @@
 import sqlite3
-from src.metrics import calculate_fuel_metrics
 def get_recent_loads():
     conn = sqlite3.connect("data/trucking.db")
     cursor = conn.cursor()
@@ -72,6 +71,11 @@ def daily_summary():
     """)
     row = cursor.fetchone()
     return row
+def calculate_fuel_metrics(current_odometer, previous_odometer, current_gallons, current_cost_per_gallon):
+    miles_driven = current_odometer - previous_odometer
+    mpg = miles_driven / current_gallons
+    fuel_cost_per_mile = current_cost_per_gallon / mpg
+    return miles_driven, mpg, fuel_cost_per_mile
 def recent_fuel_mpg(conn):
     conn = sqlite3.connect("data/trucking.db")
     cursor = conn.cursor()
@@ -103,4 +107,19 @@ def recent_fuel_mpg(conn):
         current_cost_per_gallon
     )
     return (fuel_cost_per_mile, current_purchase_date)
-
+def get_next_load_sequence(date):
+    conn = sqlite3.connect("data/trucking.db")
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT MAX(load_sequence)
+        FROM loads
+        WHERE date = ?
+        """,
+        (date,)
+    )
+    max_sequence = cursor.fetchone()[0]
+    conn.close()
+    if max_sequence is None:
+        return 1
+    return max_sequence + 1
