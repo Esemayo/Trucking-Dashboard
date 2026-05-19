@@ -2,33 +2,48 @@
 <html>
 <head>
     <title>Add Load</title>
+<style>
+    .form-layout {
+        display: flex;
+        gap: 40px;
+        align-items: flex-start;
+
+    }
+    .message-section {
+        color: red;
+        font-weight: bold;
+        max-width: 300px;
+    }
+</style>
 </head>
 <body>
     <h1>Add New Load</h1>
-
+<div class="form-layout">
     <form method="POST" action="{{ url_for('add_load') }}">
         <label for="date">Date</label>
-        <input type="date" id="date" name="date" required value="{{ form_data['date'] }}">
+        <input type="date" id="date" name="date" required value="{{ form_data.get('date', '') }}">
 
         <br><br>
 
         <label for="load_type">Load Type</label>
         <select id="load_type" name="load_type" required>
             <option value="">Select load type</option>
-            <option value="scrap">Scrap</option>
-            <option value="rebar">Rebar</option>
-            <option value="container">Container</option>
+        <option value="scrap" {% if form_data.get("load_type") == "scrap" %}selected{% endif %}>Scrap</option>
+
+        <option value="rebar" {% if form_data.get("load_type") == "rebar" %}selected{% endif %}>Rebar</option>
+
+        <option value="container" {% if form_data.get("load_type") == "container" %}selected{% endif %}>Container</option>
         </select>
 
         <br><br>
 
         <label for="miles">Miles</label>
-        <input type="number" id="miles" name="miles" step="0.1" min="0" required value="{{ form_data['miles'] }}">
+        <input type="number" id="miles" name="miles" step="0.1" min="0" required value="{{ form_data.get('miles', '') }}">
 
         <br><br>
 
         <label for="rate">Rate</label>
-        <input type="number" id="rate" name="rate" step="0.01" min="0" required value="{{ form_data['rate'] }}">
+        <input type="number" id="rate" name="rate" step="0.01" min="0" required value="{{ form_data.get('rate', '') }}">
 
         <br><br>
         
@@ -37,7 +52,12 @@
     </form>
 
     <br>
-
+<div class="message-section">
+    {% if error %}
+        <p>{{ error }}</p>
+    {% endif %}
+</div>
+</div>
     <a href="{{ url_for('home') }}">Back to Dashboard</a>
 </body>
 </html>

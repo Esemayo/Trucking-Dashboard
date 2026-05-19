@@ -92,3 +92,17 @@ def clean_row_fuel(row):
     row["total_cost"] = total_cost
     row["odometer"] = odometer
     return row, None
+def clean_expense(expense_name, monthly_cost):
+    errors = []
+    if not expense_name or not expense_name.strip().lower:
+        errors.append("Expense name is required.")
+    else:
+        expense_name = expense_name.strip().lower()
+    try:
+        monthly_cost = float(monthly_cost)
+    except (TypeError, ValueError):
+        errors.append("Monthly cost must be a number.")
+        monthly_cost = None
+    if monthly_cost is not None and monthly_cost <= 0:
+        errors.append("Monthly cost must be greater than 0.")
+    return expense_name, monthly_cost, errors

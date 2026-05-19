@@ -1,10 +1,10 @@
 from flask import Flask, render_template, redirect, url_for, request
-from src.query import get_recent_loads, daily_summary, get_load_performance, recent_fuel_mpg, get_next_load_sequence
+from src.query import get_recent_loads, daily_summary, get_load_performance, recent_fuel_mpg, get_next_load_sequence, total_expense, get_all_expenses
 from src.main import run_pipeline
 from src.load_calculator import calculate_test_load
-from src.db import db_connection, create_tables, insert_load, insert_fuel
-from src.cleaners import clean_row, clean_row_fuel
-from src.metrics import load_metrics, get_fuel_cost_per_mile, calculate_cost_per_gallon
+from src.db import db_connection, create_tables, insert_load, insert_fuel,create_expense_table, insert_expense
+from src.cleaners import clean_row, clean_row_fuel, clean_expense
+from src.metrics import load_metrics, get_fuel_cost_per_mile, calculate_cost_per_gallon, get_fixed_cost_per_mile
 import sqlite3
 app = Flask(__name__)
 app.secret_key = "dev"
@@ -30,10 +30,12 @@ def run_pipeline_route():
         pipeline_results=results,
         **get_home_data()
     )
+#to do add loads per day to load calculator for short local loads that can be repeated
 @app.route("/calculate_load", methods=["POST"])
 def calculate_load():
     miles_text = request.form.get("miles", "").strip()
     rate_text = request.form.get("rate", "").strip()
+    conn = db_connection()
     if not miles_text or not rate_text:
         return render_template(
             "index.html",
@@ -58,7 +60,8 @@ def calculate_load():
             error="Miles and Rate must be higher then 0",
             **get_home_data()
     )   
-    results = calculate_test_load(miles, rate, "rebar")
+    fixed_cpm = get_fixed_cost_per_mile(conn)
+    results = calculate_test_load(miles, rate, "rebar", fixed_cpm)
     return render_template(
         "index.html",
         calc_result=results["metrics"],
@@ -66,7 +69,6 @@ def calculate_load():
         **get_home_data()
 
     )
-# to do (make both add load and add feul data return the errors and stay in the insert page)
 @app.route("/add/load", methods=["GET", "POST"])
 def add_load():
     if request.method == "POST":
@@ -74,6 +76,12 @@ def add_load():
         load_type = request.form.get("load_type")
         miles = request.form.get("miles")
         rate = request.form.get("rate")
+        form_data = {
+            "date": date,
+            "load_type": load_type,
+            "miles": miles,
+            "rate": rate
+        }
         row = {
             "date": date,
             "load_type": load_type,
@@ -87,7 +95,7 @@ def add_load():
             return render_template(
                 "add_load.html",
                 error=error,
-                form_data=row,
+                form_data=form_data,
                 **get_home_data()
             )
         conn = db_connection()
@@ -95,7 +103,8 @@ def add_load():
             conn,
             cleaned_row["date"]
         )
-        cleaned_row = load_metrics(cleaned_row, fuel_cost_per_mile)
+        fixed_cpm = get_fixed_cost_per_mile(conn)
+        cleaned_row = load_metrics(cleaned_row, fuel_cost_per_mile, fixed_cpm)
         try:
             insert_load(conn, cleaned_row)
             conn.commit()
@@ -103,6 +112,7 @@ def add_load():
             return render_template(
                 "add_load.html",
                 error="Load entry already exists",
+                form_data=form_data
                 **get_home_data()
             )
         finally:
@@ -111,9 +121,9 @@ def add_load():
     return render_template(
         "add_load.html",
         error=None,
+        form_data={},
         **get_home_data()
     )
-#purchase_date,gallons,total_cost,odometer
 @app.route("/add/fuel", methods=["GET", "POST"])
 def add_fuel():
     if request.method=="POST":
@@ -156,7 +166,42 @@ def add_fuel():
         error=None,
         **get_home_data()
     )
-        
+@app.route("/set/expenses", methods=["GET", "POST"])
+def set_expenses():
+    if request.method=="POST":
+        expense_name = request.form.get("expense_name")
+        monthly_cost = request.form.get("monthly_cost")
+        expense_name, monthly_cost, errors = clean_expense(
+            expense_name,
+            monthly_cost
+        ) 
+        if errors:
+            return render_template(
+                "set_expenses.html",
+                error=errors[0],
+                **get_home_data()
+            )
+        conn = db_connection()
+        create_expense_table(conn)
+        try:
+            insert_expense(conn, expense_name, monthly_cost)
+        except sqlite3.IntegrityError:
+            return render_template(
+                "set_expenses.html",
+                error="Expense was repeated",
+                **get_home_data()
+            )
+        return redirect(url_for("set_expenses"))
+    conn = db_connection()
+    expenses = get_all_expenses(conn)
+    total_monthly_cost = total_expense(conn)
+    return render_template(
+        "set_expenses.html",
+        error=None,
+        expenses=expenses,
+        total_monthly_cost=total_monthly_cost,
+        form_data={}
+    )
             
 def get_home_data():
     summary_data = daily_summary()
@@ -194,3 +239,4 @@ def home():
     )
 if __name__ == "__main__":
     app.run(debug=True)
+    

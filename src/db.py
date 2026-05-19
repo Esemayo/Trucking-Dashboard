@@ -17,7 +17,6 @@ def create_tables(conn):
             UNIQUE(date, load_sequence)
     );
     """) 
-    print("Creating Tables")
     cursor.execute("DROP TABLE IF EXISTS fuel_purchases;")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS fuel_purchases(
@@ -53,6 +52,7 @@ def insert_load(conn, row):
     )  
     VALUES (?, ?, ?, ?, ?, ?, ?)
     """, values)
+    conn.commit()
 def insert_fuel(conn, row):
     cursor = conn.cursor()
     values = (
@@ -73,3 +73,28 @@ def insert_fuel(conn, row):
     )  
     VALUES (?, ?, ?, ?, ?)
     """, values)
+    conn.commit()
+def create_expense_table(conn):
+    cursor = conn.cursor()
+    #cursor.execute("DROP TABLE IF EXISTS expenses;")
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS expenses(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            expense_name TEXT,
+            monthly_cost REAL
+    );
+    """) 
+def insert_expense(conn, expense_name, monthly_cost):
+    cursor = conn.cursor()
+    values = (
+        expense_name,
+        monthly_cost
+    )
+    cursor.execute("""
+    INSERT INTO expenses (
+        expense_name,
+        monthly_cost
+    )
+    VALUES(?, ?)
+    """, values)
+    conn.commit()

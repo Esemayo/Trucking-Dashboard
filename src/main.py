@@ -3,7 +3,7 @@ from datetime import datetime
 from src.cleaners import clean_row, clean_row_fuel
 from src.db import db_connection, create_tables, insert_load, insert_fuel
 from src.loaders import load_csv
-from src.metrics import load_metrics, calculate_cost_per_gallon, get_fuel_cost_per_mile
+from src.metrics import load_metrics, calculate_cost_per_gallon, get_fuel_cost_per_mile, get_fixed_cost_per_mile
 from src.query import recent_fuel_mpg
 def process_fuel_file(conn, fuel_file):
     inserted = 0
@@ -72,6 +72,7 @@ def process_loads_file(conn, loads_file):
     print("Load Summary")
     print("_" * 90)
     rows = load_csv(loads_file)
+    fixed_cpm = get_fixed_cost_per_mile(conn)
     for row in rows:  
         cleaned_row, error = clean_row(row)
         if error:
@@ -86,7 +87,7 @@ def process_loads_file(conn, loads_file):
             conn,
             cleaned_row["date"]
         )
-        cleaned_row = load_metrics(cleaned_row, fuel_cost_per_mile)
+        cleaned_row = load_metrics(cleaned_row, fuel_cost_per_mile, fixed_cpm)
         try:
             insert_load(conn, cleaned_row)
             inserted += 1

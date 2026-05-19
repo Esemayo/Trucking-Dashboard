@@ -46,6 +46,8 @@
 <hr>
     <a href="{{ url_for('add_fuel') }}">Add Fuel Data</a>
 <hr>
+    <a href="{{ url_for('set_expenses') }}">Set Monthly Expenses</a>
+<hr>
     <form action="/run_pipeline" method="post">
         <button type="submit">Run Pipeline</button>
     </form>
@@ -151,7 +153,6 @@
             <button type="submit">Calculate</button>
         </form>
             {% if calc_result %}
-                <p>Type: {{ calc_result["load_type"] }}</p>
                 <p>Miles: {{ calc_result["miles"] }}</p>
                 <p>Rate Per Mile: {{ "%.2f"|format(calc_result["rate_per_mile"]) }}</p>
                 <p>All in Profit Per Mile(After all costs): {{ "%.2f"|format(calc_result["net_profit_per_mile"]) }}</p>

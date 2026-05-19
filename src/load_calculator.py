@@ -1,7 +1,7 @@
 from src.cleaners import clean_row
 from src.metrics import load_metrics
 from datetime import date
-def calculate_test_load(miles, rate, load_type):
+def calculate_test_load(miles, rate, load_type, fixed_cpm):
     test_load = {
         "date": date.today().isoformat(),
         "load_type": load_type,
@@ -17,7 +17,7 @@ def calculate_test_load(miles, rate, load_type):
             "error": error,
             "metrics": None
         }
-    metrics = load_metrics(cleaned_row, fuel_cost_per_mile)
+    metrics = load_metrics(cleaned_row, fuel_cost_per_mile, fixed_cpm)
     estimated_fuel_cost = cleaned_row["miles"] * fuel_cost_per_mile
     estimated_driver_pay = 200
     decision_profit = cleaned_row["rate"] - estimated_fuel_cost - estimated_driver_pay
