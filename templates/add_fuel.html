@@ -2,33 +2,39 @@
 <html>
   <body>
     <h1>Add Fuel Purchase</h1>
-
+    <div class="form-layout">
     <form method="POST" action="{{ url_for('add_fuel') }}">
       <label for="purchase_date">Purchase Date</label>
-      <input type="date" id="purchase_date" name="purchase_date" required>
+      <input type="date" id="purchase_date" name="purchase_date" required value="{{ form_data.get('purchase_date', '') }}">
 
       <br><br>
 
       <label for="gallons">Gallons</label>
-      <input type="number" id="gallons" name="gallons" step="0.001" min="0" required>
+      <input type="number" id="gallons" name="gallons" step="0.001" min="0" required value="{{ form_data.get('gallons', '') }}">
 
       <br><br>
 
       <label for="total_cost">Total Cost</label>
-      <input type="number" id="total_cost" name="total_cost" step="0.01" min="0" required>
+      <input type="number" id="total_cost" name="total_cost" step="0.01" min="0" required value="{{ form_data.get('total_cost', '') }}">
 
       <br><br>
 
       <label for="odometer">Odometer</label>
-      <input type="number" id="odometer" name="odometer" step="1" min="0" required>
+      <input type="number" id="odometer" name="odometer" step="1" min="0" required value="{{ form_data.get('odometer', '') }}">
 
       <br><br>
 
       <button type="submit">Add Fuel</button>
     </form>
-
     <br>
-
+    {% if error %}
+    <div class="error-box">
+        {% for error in error %}
+            <p>{{ error }}</p>
+    {% endfor %}
+    </div>
+    {% endif %}
+    </div>
     <a href="{{ url_for('home') }}">Back to Dashboard</a>
   </body>
 </html>

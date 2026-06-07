@@ -107,8 +107,7 @@ def recent_fuel_mpg(conn):
         current_cost_per_gallon
     )
     return (fuel_cost_per_mile, current_purchase_date)
-def get_next_load_sequence(date):
-    conn = sqlite3.connect
+def get_next_load_sequence(conn ,date):
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -119,7 +118,6 @@ def get_next_load_sequence(date):
         (date,)
     )
     max_sequence = cursor.fetchone()[0]
-    conn.close()
     if max_sequence is None:
         return 1
     return max_sequence + 1
@@ -131,7 +129,6 @@ def total_expense(conn):
         FROM expenses
         """)
     result = cursor.fetchone()[0]
-    conn.close()
     return result or 0
 def get_all_expenses(conn):
     cursor = conn.cursor()

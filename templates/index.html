@@ -3,6 +3,13 @@
 <head>
     <title>Load Profitability Dashboard</title>
     <style>
+    body {
+        background-color: #121212;
+        color: #f5f5f5;
+    }
+    table {
+        color: #f5f5f5;
+    }
     table {
         border-collapse: collapse;
     }
@@ -16,13 +23,16 @@
         text-align: right;
     }
     .status-profit {
-        background-color: #d4edda;
+        background-color: #163d22;
+        color: #f8f8f8;
     }
     .status-barely {
-        background-color: #ffe5b4;
+        background-color: #4a4217;
+        color: #f8f8f8;
     }
     .status-loss {
-        background-color: #f8d7da;
+        background-color: #4a1f1f;
+        color: #f8f8f8;
     }
     .bad {
         color: red;
@@ -36,6 +46,20 @@
     .great {
         color: lime;
         font-weight: bold;
+    }
+    .calc-inputs {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        color: #f5f5f5;
+    }
+    .calc-field {
+        display: flex;
+        flex-direction: column;
+    }
+    .calc-field input {
+        width: 130px;
+        padding: 4px 6px;
     }
     </style>
 </head>
@@ -133,7 +157,9 @@
     <div>
         <h2>Load  Calculator</h2>
         <form action="/calculate_load" method="POST">
-
+            <div class="calc-inputs">
+            <div class="calc-field">
+            <label for="miles">Miles per load</label>
             <input
                 type="number"
                 name="miles"
@@ -142,6 +168,9 @@
                 placeholder="Enter Miles"
                 value="{{ request.form.get('miles', '') }}"
             >
+            </div>
+            <div class="calc-field">
+            <label for="rate">Rate per load</label>
              <input
                 type="number"
                 name="rate"
@@ -150,14 +179,28 @@
                 placeholder="Enter Rate"
                 value="{{ request.form.get('rate', '') }}"
             >
+            </div>
+            <div class="calc-field">
+            <label for="loads_per_day">Loads per Day</label>
+             <input
+                type="number"
+                name="loads_per_day"
+                id="loads_per_day"
+                min="1"
+                step="1"
+                placeholder="Loads Per Day"
+                value="{{ request.form.get('loads_per_day', '') }}"
+            >
+            </div>
             <button type="submit">Calculate</button>
         </form>
+    </div>
             {% if calc_result %}
-                <p>Miles: {{ calc_result["miles"] }}</p>
-                <p>Rate Per Mile: {{ "%.2f"|format(calc_result["rate_per_mile"]) }}</p>
-                <p>All in Profit Per Mile(After all costs): {{ "%.2f"|format(calc_result["net_profit_per_mile"]) }}</p>
-                <p>Decision Profit: {{ "%.2f"|format(calc_result["decision_profit"]) }}</p>
-                <p>Take Home Profit Per Mile(This load only): {{ "%.2f"|format(calc_result["decision_rpm"]) }}</p>
+                <p><strong>Total Miles Today:</strong> {{ calc_result["total_miles"] }}</p>
+                <p><strong>Revenue Per Mile:</strong> {{ "%.2f"|format(calc_result["rate_per_mile"]) }}</p>
+                <p><strong>Profit Per Mile(Before costs):</strong> {{ "%.2f"|format(calc_result["net_profit_per_mile"]) }}</p>
+                <p><strong>Estimated Daily Profit(Before Monthly Costs):</strong> {{ "%.2f"|format(calc_result["decision_profit"]) }}</p>
+                <p><strong>Profit Per Mile(After costs):</strong> {{ "%.2f"|format(calc_result["decision_rpm"]) }}</p>
 
             {% endif %}
     </div> 

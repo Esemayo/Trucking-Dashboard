@@ -12,6 +12,16 @@ def load_metrics(row, fuel_cost_per_mile, fixed_cpm):
     row["rate_per_mile"] = rate_per_mile
     row["net_profit_per_mile"] = net_profit_per_mile
     return row 
+def multi_load_metrics(total_rate, total_miles, fuel_cost_per_mile, fixed_cpm):
+     total_cost_per_mile = fixed_cpm + fuel_cost_per_mile
+     rate_per_mile = total_rate/total_miles
+     net_profit_per_mile = rate_per_mile - total_cost_per_mile
+     return {
+          "rate_per_mile": rate_per_mile,
+          "net_profit_per_mile": net_profit_per_mile,
+          "total_miles": total_miles,
+          "total_rate": total_rate
+     }
 def calculate_cost_per_gallon(row):
     total_cost = row["total_cost"]
     gallons = row["gallons"]
@@ -23,6 +33,7 @@ def get_fuel_cost_per_mile(conn, load_date):
     if fuel_result is None:
             fuel_cost_per_mile = 2.00
             print("WARNING: using placeholder fuel cost per mile = 2.00")
+            return fuel_cost_per_mile
     fuel_cost_per_mile, fuel_date = fuel_result
     fuel_dt = datetime.strptime(fuel_date, "%Y-%m-%d").date()
     load_dt = datetime.strptime(load_date, "%Y-%m-%d").date()

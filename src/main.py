@@ -74,13 +74,13 @@ def process_loads_file(conn, loads_file):
     rows = load_csv(loads_file)
     fixed_cpm = get_fixed_cost_per_mile(conn)
     for row in rows:  
-        cleaned_row, error = clean_row(row)
-        if error:
+        cleaned_row, errors = clean_row(row)
+        if errors:
             validation_errors += 1
-            print(f"Skipped row with date {row['date']} skipped: {error}")
+            print(f"Skipped row with date {row['date']} skipped: {errors}")
             load_error_details.append({
                 "date": row["date"],
-                "reason": error
+                "reasons": errors
             })
             continue
         fuel_cost_per_mile = get_fuel_cost_per_mile(

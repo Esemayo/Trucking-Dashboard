@@ -3,8 +3,8 @@ from src.query import get_recent_loads, daily_summary, get_load_performance, rec
 from src.main import run_pipeline
 from src.load_calculator import calculate_test_load
 from src.db import db_connection, create_tables, insert_load, insert_fuel,create_expense_table, insert_expense
-from src.cleaners import clean_row, clean_row_fuel, clean_expense
-from src.metrics import load_metrics, get_fuel_cost_per_mile, calculate_cost_per_gallon, get_fixed_cost_per_mile
+from src.cleaners import clean_row, clean_row_fuel, clean_expense, clean_load
+from src.metrics import load_metrics, get_fuel_cost_per_mile, calculate_cost_per_gallon, get_fixed_cost_per_mile, multi_load_metrics
 import sqlite3
 app = Flask(__name__)
 app.secret_key = "dev"
@@ -35,6 +35,7 @@ def run_pipeline_route():
 def calculate_load():
     miles_text = request.form.get("miles", "").strip()
     rate_text = request.form.get("rate", "").strip()
+    loads_per_day_text = request.form.get("loads_per_day", "").strip()
     conn = db_connection()
     if not miles_text or not rate_text:
         return render_template(
@@ -46,14 +47,15 @@ def calculate_load():
     try:
         miles = float(miles_text)
         rate = float(rate_text)
+        loads_per_day = int(loads_per_day_text)
     except ValueError:
         return render_template(
             "index.html",
             calc_result=None,
             error="Both miles and rate must be valid numbers",
             **get_home_data()
-    )   
-    if miles <= 0 or rate <= 0:
+    )
+    if miles <= 0 or rate <= 0 or loads_per_day <= 0:
         return render_template(
             "index.html",
             calc_result=None,
@@ -61,21 +63,24 @@ def calculate_load():
             **get_home_data()
     )   
     fixed_cpm = get_fixed_cost_per_mile(conn)
-    results = calculate_test_load(miles, rate, "rebar", fixed_cpm)
+    results = calculate_test_load(miles, rate, "rebar", fixed_cpm, loads_per_day)
     return render_template(
         "index.html",
         calc_result=results["metrics"],
         pipeline_results=None,
         **get_home_data()
-
     )
+# to do add better labels to calculator results screen
+# to do add a recent entries section to add loads
 @app.route("/add/load", methods=["GET", "POST"])
 def add_load():
+    successful_entry = None
     if request.method == "POST":
         date = request.form.get("date")
         load_type = request.form.get("load_type")
         miles = request.form.get("miles")
         rate = request.form.get("rate")
+        conn = db_connection()
         form_data = {
             "date": date,
             "load_type": load_type,
@@ -85,20 +90,20 @@ def add_load():
         row = {
             "date": date,
             "load_type": load_type,
-            "load_sequence": get_next_load_sequence(date),
             "miles": miles,
             "rate": rate
         }
-        cleaned_row, error = clean_row(row)
-        if error:
-            print("Error:", error)
+        cleaned_row, errors = clean_load(row)
+        if errors:
+            print("Error:", errors)
             return render_template(
                 "add_load.html",
-                error=error,
+                errors=errors,
                 form_data=form_data,
+                successful_entry=None,
                 **get_home_data()
             )
-        conn = db_connection()
+        cleaned_row["load_sequence"] = get_next_load_sequence(conn, cleaned_row["date"])
         fuel_cost_per_mile = get_fuel_cost_per_mile(
             conn,
             cleaned_row["date"]
@@ -108,20 +113,23 @@ def add_load():
         try:
             insert_load(conn, cleaned_row)
             conn.commit()
+            successful_entry = cleaned_row
         except sqlite3.IntegrityError:
             return render_template(
                 "add_load.html",
                 error="Load entry already exists",
-                form_data=form_data
+                form_data=form_data,
+                successful_entry=None,
                 **get_home_data()
             )
+        
         finally:
             conn.close()
-        return redirect(url_for("home"))
     return render_template(
         "add_load.html",
         error=None,
         form_data={},
+        successful_entry=successful_entry,
         **get_home_data()
     )
 @app.route("/add/fuel", methods=["GET", "POST"])
@@ -132,6 +140,13 @@ def add_fuel():
         total_cost = request.form.get("total_cost")
         odometer = request.form.get("odometer")
         last_odometer = None
+        form_data = {
+            "purchase_date": purchase_date,
+            "gallons": gallons,
+            "total_cost": total_cost,
+            "total_cost": total_cost,
+            "odometer": odometer
+        }
         row = {
             "purchase_date": purchase_date,
             "gallons": gallons,
@@ -144,6 +159,7 @@ def add_fuel():
             print("Error:", error)
             return render_template(
                 "add_fuel.html",
+                form_data=form_data,
                 error=error,
                 **get_home_data()
             )
@@ -156,6 +172,7 @@ def add_fuel():
             return render_template(
                 "add_fuel.html",
                 error="Fuel entry already exists",
+                form_data=form_data,
                 **get_home_data()
             )
         finally:
@@ -164,6 +181,7 @@ def add_fuel():
     return render_template(
         "add_fuel.html",
         error=None,
+        form_data={},
         **get_home_data()
     )
 @app.route("/set/expenses", methods=["GET", "POST"])

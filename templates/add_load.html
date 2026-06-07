@@ -9,8 +9,13 @@
         align-items: flex-start;
 
     }
-    .message-section {
+    .error-message {
         color: red;
+        font-weight: bold;
+        max-width: 300px;
+    }
+    .success-message {
+        color: green;
         font-weight: bold;
         max-width: 300px;
     }
@@ -50,13 +55,26 @@
 
         <button type="submit">Add Load</button>
     </form>
-
-    <br>
-<div class="message-section">
-    {% if error %}
-        <p>{{ error }}</p>
-    {% endif %}
-</div>
+    <div class="message-section">
+        <div class="error-message">
+            {% if errors %}
+                {% for error in errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div class="success-message">
+            {% if successful_entry %}
+                <h3> ✅ Load Added Successfully</h3>
+                <p>Date: {{ successful_entry.date }}</p>
+                <p>Load Type:{{ successful_entry.load_type }}</p>
+                <p>Miles: {{ successful_entry.miles }}</p>
+                <p>Rate: {{ successful_entry.rate }}</p>
+                <p>Rate per Mile: {{ successful_entry.rate_per_mile }}</p>
+                <p>Net Profit per MIle: {{ successful_entry.net_profit_per_mile }}</p>
+        {% endif%}
+        </div>
+    </div>
 </div>
     <a href="{{ url_for('home') }}">Back to Dashboard</a>
 </body>
