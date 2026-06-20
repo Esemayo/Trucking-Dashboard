@@ -30,7 +30,6 @@ def run_pipeline_route():
         pipeline_results=results,
         **get_home_data()
     )
-#to do add loads per day to load calculator for short local loads that can be repeated
 @app.route("/calculate_load", methods=["POST"])
 def calculate_load():
     miles_text = request.form.get("miles", "").strip()
@@ -72,6 +71,7 @@ def calculate_load():
     )
 # to do add better labels to calculator results screen
 # to do add a recent entries section to add loads
+#fix the database locking bug please
 @app.route("/add/load", methods=["GET", "POST"])
 def add_load():
     successful_entry = None
@@ -132,18 +132,18 @@ def add_load():
         successful_entry=successful_entry,
         **get_home_data()
     )
+# Todo set up div in add fuel html for succesful entries
 @app.route("/add/fuel", methods=["GET", "POST"])
 def add_fuel():
+    successful_entry = None
     if request.method=="POST":
         purchase_date = request.form.get("purchase_date")
         gallons = request.form.get("gallons")
         total_cost = request.form.get("total_cost")
         odometer = request.form.get("odometer")
-        last_odometer = None
         form_data = {
             "purchase_date": purchase_date,
             "gallons": gallons,
-            "total_cost": total_cost,
             "total_cost": total_cost,
             "odometer": odometer
         }
@@ -151,16 +151,17 @@ def add_fuel():
             "purchase_date": purchase_date,
             "gallons": gallons,
             "total_cost": total_cost,
-            "total_cost": total_cost,
             "odometer": odometer
         }
         cleaned_row_fuel, error = clean_row_fuel(row)
+        successful_entry = cleaned_row_fuel
         if error:
             print("Error:", error)
             return render_template(
                 "add_fuel.html",
                 form_data=form_data,
                 error=error,
+                successful_entry=None,
                 **get_home_data()
             )
         cleaned_row_fuel = calculate_cost_per_gallon(cleaned_row_fuel)
@@ -173,15 +174,16 @@ def add_fuel():
                 "add_fuel.html",
                 error="Fuel entry already exists",
                 form_data=form_data,
+                successful_entry=None,
                 **get_home_data()
             )
         finally:
             conn.close()
-        return redirect(url_for("home"))
     return render_template(
         "add_fuel.html",
         error=None,
         form_data={},
+        successful_entry=successful_entry,
         **get_home_data()
     )
 @app.route("/set/expenses", methods=["GET", "POST"])
@@ -193,34 +195,45 @@ def set_expenses():
             expense_name,
             monthly_cost
         ) 
+        form_data = {
+            "expense_name": expense_name,
+            "monthly_cost": monthly_cost
+        }
         if errors:
             return render_template(
                 "set_expenses.html",
                 error=errors[0],
+                form_data=form_data,
                 **get_home_data()
             )
         conn = db_connection()
-        create_expense_table(conn)
         try:
+            create_expense_table(conn)
             insert_expense(conn, expense_name, monthly_cost)
+            return redirect(url_for("set_expenses"))
         except sqlite3.IntegrityError:
+            expenses = get_all_expenses(conn)
+            total_monthly_cost = total_expense(conn)
+            conn.close()
             return render_template(
                 "set_expenses.html",
                 error="Expense was repeated",
+                expenses=expenses,
+                total_monthly_cost=total_monthly_cost,
+                form_data=form_data,
                 **get_home_data()
-            )
-        return redirect(url_for("set_expenses"))
+                )
     conn = db_connection()
     expenses = get_all_expenses(conn)
     total_monthly_cost = total_expense(conn)
+    conn.close()
     return render_template(
         "set_expenses.html",
         error=None,
         expenses=expenses,
         total_monthly_cost=total_monthly_cost,
         form_data={}
-    )
-            
+        )
 def get_home_data():
     summary_data = daily_summary()
     date, total_profit, daily_miles, load_count, avg_profit_per_mile = summary_data

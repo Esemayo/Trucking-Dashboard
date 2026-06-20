@@ -34,6 +34,13 @@
     {% endfor %}
     </div>
     {% endif %}
+    {%if successful_entry %}
+        <h3>Fuel Data Succesfully Entered</h3>
+        <p>Purchase Date {{ successful_entry.purchase_date }}</p>
+        <p>Gallons {{ successful_entry.gallons }}</p>
+        <p>Total Cost {{ successful_entry.total_cost }}</p>
+        <p>Odometer {{ successful_entry.odometer }}</p>
+    {% endif %}
     </div>
     <a href="{{ url_for('home') }}">Back to Dashboard</a>
   </body>

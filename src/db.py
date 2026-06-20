@@ -81,7 +81,9 @@ def create_expense_table(conn):
     CREATE TABLE IF NOT EXISTS expenses(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             expense_name TEXT,
-            monthly_cost REAL
+            monthly_cost REAL,
+            UNIQUE(expense_name)
+                   
     );
     """) 
 def insert_expense(conn, expense_name, monthly_cost):
