@@ -3,6 +3,12 @@
 <head>
     <title>Add Load</title>
 <style>
+    body {
+        background: #111827;
+        color: white;
+        font-family: Arial, sans-serif;
+        padding: 40px;
+    }
     .form-layout {
         display: flex;
         gap: 40px;
@@ -58,6 +64,7 @@
     <div class="message-section">
         <div class="error-message">
             {% if errors %}
+            <h3>🚨 Please Fix the Following: </h3>
                 {% for error in errors %}
                     <p>{{ error }}</p>
                 {% endfor %}

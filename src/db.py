@@ -3,7 +3,7 @@ def db_connection():
     return sqlite3.connect("data/trucking.db")
 def create_tables(conn):
     cursor = conn.cursor()
-    cursor.execute("DROP TABLE IF EXISTS loads;")
+    #cursor.execute("DROP TABLE IF EXISTS loads;")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS loads(
             id INTEGER PRIMARY KEY,
@@ -17,7 +17,7 @@ def create_tables(conn):
             UNIQUE(date, load_sequence)
     );
     """) 
-    cursor.execute("DROP TABLE IF EXISTS fuel_purchases;")
+    #cursor.execute("DROP TABLE IF EXISTS fuel_purchases;")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS fuel_purchases(
                 fuel_id INTEGER PRIMARY KEY,

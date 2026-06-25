@@ -69,9 +69,6 @@ def calculate_load():
         pipeline_results=None,
         **get_home_data()
     )
-# to do add better labels to calculator results screen
-# to do add a recent entries section to add loads
-#fix the database locking bug please
 @app.route("/add/load", methods=["GET", "POST"])
 def add_load():
     successful_entry = None
@@ -117,7 +114,7 @@ def add_load():
         except sqlite3.IntegrityError:
             return render_template(
                 "add_load.html",
-                error="Load entry already exists",
+                error=["Load entry already exists"],
                 form_data=form_data,
                 successful_entry=None,
                 **get_home_data()
@@ -132,7 +129,6 @@ def add_load():
         successful_entry=successful_entry,
         **get_home_data()
     )
-# Todo set up div in add fuel html for succesful entries
 @app.route("/add/fuel", methods=["GET", "POST"])
 def add_fuel():
     successful_entry = None
@@ -172,7 +168,7 @@ def add_fuel():
         except sqlite3.IntegrityError:
             return render_template(
                 "add_fuel.html",
-                error="Fuel entry already exists",
+                error=["Fuel entry already exists"],
                 form_data=form_data,
                 successful_entry=None,
                 **get_home_data()

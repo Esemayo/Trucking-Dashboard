@@ -1,7 +1,34 @@
 <!DOCTYPE html>
 <html>
-  <body>
     <h1>Add Fuel Purchase</h1>
+    <style>
+    body{
+      background: #111827;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 40px;
+    }
+    .form-layout {
+        display: flex;
+        gap: 40px;
+        align-items: flex-start;
+
+    }
+    .error-message {
+        color: red;
+        font-weight: bold;
+        min-width: 300px;
+        flex-shrink:0;
+        white-space: nowrap;
+    }
+    .success-message {
+        color: green;
+        font-weight: bold;
+        min-width: 300px;
+        flex-shrink: 0;
+    }
+</style>
+  <body>
     <div class="form-layout">
     <form method="POST" action="{{ url_for('add_fuel') }}">
       <label for="purchase_date">Purchase Date</label>
@@ -28,18 +55,20 @@
     </form>
     <br>
     {% if error %}
-    <div class="error-box">
-        {% for error in error %}
-            <p>{{ error }}</p>
-    {% endfor %}
+    <div class="error-message">
+      {% for message in error %}
+          <p>{{ message }}</p>
+      {% endfor %}
     </div>
     {% endif %}
     {%if successful_entry %}
-        <h3>Fuel Data Succesfully Entered</h3>
+    <div class="success-message">
+        <h3>✅Fuel Data Succesfully Entered</h3>
         <p>Purchase Date {{ successful_entry.purchase_date }}</p>
         <p>Gallons {{ successful_entry.gallons }}</p>
         <p>Total Cost {{ successful_entry.total_cost }}</p>
         <p>Odometer {{ successful_entry.odometer }}</p>
+    </div>
     {% endif %}
     </div>
     <a href="{{ url_for('home') }}">Back to Dashboard</a>
