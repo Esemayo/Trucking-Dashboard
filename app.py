@@ -119,7 +119,6 @@ def add_load():
                 successful_entry=None,
                 **get_home_data()
             )
-        
         finally:
             conn.close()
     return render_template(
@@ -129,6 +128,10 @@ def add_load():
         successful_entry=successful_entry,
         **get_home_data()
     )
+@app.route("/loads")
+def loads():
+    loads_data = get_recent_loads()
+    return render_template("loads.html", loads_data=loads_data)
 @app.route("/add/fuel", methods=["GET", "POST"])
 def add_fuel():
     successful_entry = None

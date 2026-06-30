@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <h1>Manage Loads</h1>
+        <a href="{{ url_for('home')}}">Back To Dashboard</a>
+        <h2>All Loads</h2>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Date</th>
+        <th>Load Type</th>
+        <th>Load Sequence</th>
+        <th>Miles</th>
+        <th>Rate</th>
+        <th>Profit Per Mile</th>
+        <th>Status</th>
+        <th>Edit</th>
+    </tr>
+    {% for load in loads_data %}
+    <tr class="status-{{ load.status|lower}}">
+        <td>{{ load.id }}</td>
+        <td>{{ load.date }}</td>
+        <td>{{ load.load_type }}</td>
+        <td>{{ load.load_sequence }}</td>
+        <td>{{ load.miles }}</td>
+        <td>{{ "%.2f"|format(load.rate) }}</td>
+        <td>{{ "%.2f"|format(load.ppm) }}</td>
+        <td>{{ load.status }}</td>
+        <td><a href="#">Edit</a></td>
+    </tr>
+    {% endfor %}
+
+</table
+    </body>
+</html>

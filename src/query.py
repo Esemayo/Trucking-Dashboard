@@ -3,7 +3,7 @@ def get_recent_loads():
     conn = sqlite3.connect("data/trucking.db")
     cursor = conn.cursor()
     cursor.execute("""
-    SELECT date, load_type, load_sequence, miles, rate, net_profit_per_mile 
+    SELECT id, date, load_type, load_sequence, miles, rate, net_profit_per_mile 
     FROM loads
     ORDER BY date DESC, load_sequence DESC
     LIMIT 10;
@@ -11,7 +11,7 @@ def get_recent_loads():
     rows = cursor.fetchall()
     loads_data = []
     for row in rows:
-        date, load_type, load_sequence, miles, rate, net_profit_per_mile = row
+        id, date, load_type, load_sequence, miles, rate, net_profit_per_mile = row
         if net_profit_per_mile > 0.30:
             status = "Profit"
         elif net_profit_per_mile >=0:
@@ -19,6 +19,7 @@ def get_recent_loads():
         else:
             status = "Loss"
         loads_data.append({
+            "id": id,
             "date": date,
             "load_type": load_type,
             "load_sequence": load_sequence,
