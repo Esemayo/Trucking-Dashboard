@@ -1,5 +1,5 @@
 from flask import Flask, render_template, redirect, url_for, request
-from src.query import get_recent_loads, daily_summary, get_load_performance, recent_fuel_mpg, get_next_load_sequence, total_expense, get_all_expenses
+from src.query import get_recent_loads, daily_summary, get_load_performance, recent_fuel_mpg, get_next_load_sequence, total_expense, get_all_expenses, get_recent_fuel, get_load_by_id
 from src.main import run_pipeline
 from src.load_calculator import calculate_test_load
 from src.db import db_connection, create_tables, insert_load, insert_fuel,create_expense_table, insert_expense
@@ -185,6 +185,56 @@ def add_fuel():
         successful_entry=successful_entry,
         **get_home_data()
     )
+@app.route("/edit/load/<int:load_id>", methods=["GET", "POST"])
+def edit_load(load_id):
+    conn = db_connection()
+    load = get_load_by_id(conn, load_id)
+    conn.close()
+    form_data = {}
+    if request.method == "POST":
+        date = request.form.get("date")
+        load_type = request.form.get("load_type")
+        miles = request.form.get("miles")
+        rate = request.form.get("rate")
+        form_data = {
+            "date": date,
+            "load_type": load_type,
+            "miles": miles,
+            "rate": rate
+        }
+        row = {
+            "date": date,
+            "load_type": load_type,
+            "miles": miles,
+            "rate": rate
+        }
+        cleaned_row, errors = clean_load(row)
+        if errors:
+            print("Error:", errors)
+            return render_template(
+                "edit_load.html",
+                form_data=form_data,
+                errors=errors,
+                load=load,
+                load_id=load_id,
+                **get_home_data()
+            )
+        
+    return render_template(
+        "edit_load.html",
+        load=load,
+        load_id=load_id,
+        form_data=form_data
+    )
+
+
+#todo use our new form to create .gets to retreive data and use our cleaners to validate 
+# After if its a longer block(cmon man) bring in metrics 
+@app.route("/fuel")
+def fuel():
+    fuel_data = get_recent_fuel()
+    return render_template("recent_fuel.html", fuel_data=fuel_data)
+@app.route("/add/fuel", methods=["GET", "POST"])
 @app.route("/set/expenses", methods=["GET", "POST"])
 def set_expenses():
     if request.method=="POST":
@@ -268,5 +318,5 @@ def home():
         **get_home_data()
     )
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
     

@@ -6,7 +6,7 @@ def create_tables(conn):
     #cursor.execute("DROP TABLE IF EXISTS loads;")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS loads(
-            id INTEGER PRIMARY KEY,
+            load_id INTEGER PRIMARY KEY,
             date TEXT,
             load_type TEXT,
             load_sequence INTEGER, 
@@ -100,3 +100,22 @@ def insert_expense(conn, expense_name, monthly_cost):
     VALUES(?, ?)
     """, values)
     conn.commit()
+def update_load(conn, load_id, load_type, miles, rate):
+    cursor =conn.cursor()
+    values = (
+        load_type,
+        miles,
+        rate,
+        load_id
+    )
+    cursor.execute("""
+        UPDATE loads
+        SET 
+            load_type = ?,
+            miles = ?,
+            rate = ?
+            
+        WHERE load_id = ? 
+            """, values)
+    conn.commit()
+    #Todo continue adding all the load values we want changed and begin working on our editing route🤌

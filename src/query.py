@@ -3,7 +3,7 @@ def get_recent_loads():
     conn = sqlite3.connect("data/trucking.db")
     cursor = conn.cursor()
     cursor.execute("""
-    SELECT id, date, load_type, load_sequence, miles, rate, net_profit_per_mile 
+    SELECT load_id, date, load_type, load_sequence, miles, rate, net_profit_per_mile 
     FROM loads
     ORDER BY date DESC, load_sequence DESC
     LIMIT 10;
@@ -11,7 +11,7 @@ def get_recent_loads():
     rows = cursor.fetchall()
     loads_data = []
     for row in rows:
-        id, date, load_type, load_sequence, miles, rate, net_profit_per_mile = row
+        load_id, date, load_type, load_sequence, miles, rate, net_profit_per_mile = row
         if net_profit_per_mile > 0.30:
             status = "Profit"
         elif net_profit_per_mile >=0:
@@ -19,7 +19,7 @@ def get_recent_loads():
         else:
             status = "Loss"
         loads_data.append({
-            "id": id,
+            "load_id": load_id,
             "date": date,
             "load_type": load_type,
             "load_sequence": load_sequence,
@@ -108,6 +108,28 @@ def recent_fuel_mpg(conn):
         current_cost_per_gallon
     )
     return (fuel_cost_per_mile, current_purchase_date)
+def get_recent_fuel():
+    conn = sqlite3.connect("data/trucking.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT fuel_id, purchase_date, gallons, odometer, cost_per_gallon
+    FROM fuel_purchases
+    ORDER BY purchase_date DESC
+    LIMIT 10;
+    """)
+    rows = cursor.fetchall()
+    fuel_data = []
+    for row in rows:
+        fuel_id, purchase_date, gallons, odometer, cost_per_gallon = row
+        fuel_data.append({
+            "fuel_id": fuel_id,
+            "purchase_date": purchase_date,
+            "gallons": gallons,
+            "odometer": odometer,
+            "cost_per_gallon": cost_per_gallon
+        })
+    conn.close()
+    return fuel_data
 def get_next_load_sequence(conn ,date):
     cursor = conn.cursor()
     cursor.execute(
@@ -139,4 +161,13 @@ def get_all_expenses(conn):
     """)
     results = cursor.fetchall()
     return results
-    
+def get_load_by_id(conn, load_id):
+    cursor =conn.cursor()
+    values = (load_id,)
+    cursor.execute("""
+        SELECT date, load_type, miles, rate
+        FROM loads
+        WHERE load_id = ?            
+    """, values)
+    results = cursor.fetchone()
+    return results

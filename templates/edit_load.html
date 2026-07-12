@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <h1>Edit Load</h1>
+    <style>
+    body {
+        background: #111827;
+        color: white;
+        font-family: Arial, sans-serif;
+        padding: 40px;
+    }
+    .form-layout {
+        display: flex;
+        gap: 40px;
+        align-items: flex-start;
+
+    }
+    .error-message {
+        color: red;
+        font-weight: bold;
+        max-width: 300px;
+    }
+    .success-message {
+        color: green;
+        font-weight: bold;
+        max-width: 300px;
+    }
+</style>
+    <div class="form-layout">
+    <form method="POST" action="{{ url_for('edit_load', load_id=load_id) }}">
+    <label for="date">Date</label>
+        <input type="date" id="date" name="date" required value="{{ form_data.get('date', load[0]) }}">
+
+        <br><br>
+
+        <label for="load_type">Load Type</label>
+        <select id="load_type" name="load_type" required>
+            <option value="{{ load.load_type}}">Select load type</option>
+        <option value="scrap" {% if form_data.get("load_type", load[1]) == "scrap" %}selected{% endif %}>Scrap</option>
+
+        <option value="rebar" {% if form_data.get("load_type", load[1]) == "rebar" %}selected{% endif %}>Rebar</option>
+
+        <option value="container" {% if form_data.get("load_type", load[1]) == "container" %}selected{% endif %}>Container</option>
+        </select>
+
+        <br><br>
+
+        <label for="miles">Miles</label>
+        <input type="number" id="miles" name="miles" step="0.1" min="0" required value="{{ form_data.get('miles', load[2]) }}">
+
+        <br><br>
+
+        <label for="rate">Rate</label>
+        <input type="number" id="rate" name="rate" step="0.01" min="0" required value="{{ form_data.get('rate', load[3]) }}">
+
+        <br><br>
+    <button type="submit">Save Changes</button>
+    </form>
+        <div class="message-section">
+        <div class="error-message">
+            {% if errors %}
+            <h3>🚨 Please Fix the Following: </h3>
+                {% for error in errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>

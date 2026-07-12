@@ -6,7 +6,7 @@
         <h2>All Loads</h2>
 <table>
     <tr>
-        <th>ID</th>
+        <th>Load ID</th>
         <th>Date</th>
         <th>Load Type</th>
         <th>Load Sequence</th>
@@ -18,7 +18,7 @@
     </tr>
     {% for load in loads_data %}
     <tr class="status-{{ load.status|lower}}">
-        <td>{{ load.id }}</td>
+        <td>{{ load.load_id }}</td>
         <td>{{ load.date }}</td>
         <td>{{ load.load_type }}</td>
         <td>{{ load.load_sequence }}</td>
@@ -26,7 +26,7 @@
         <td>{{ "%.2f"|format(load.rate) }}</td>
         <td>{{ "%.2f"|format(load.ppm) }}</td>
         <td>{{ load.status }}</td>
-        <td><a href="#">Edit</a></td>
+        <td><a href="{{ url_for('edit_load', load_id=load.load_id)}}">Edit</a></td>
     </tr>
     {% endfor %}
 

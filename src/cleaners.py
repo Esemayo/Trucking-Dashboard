@@ -39,7 +39,7 @@ def clean_row(row):
     except ValueError: 
         errors.append("Field is not numeric")  
     if miles <= 0: 
-        errors.append("Miles must be greater then 0") 
+        errors.append("Miles must be greater than 0") 
     row["miles"] = miles
     row["rate"] = rate
     row["load_sequence"] = load_sequence

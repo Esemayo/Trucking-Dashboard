@@ -31,6 +31,7 @@
 </form>
 {% for expense in expenses %}
     <p>{{ expense[0] }} - ${{ "{:,.2f}".format(expense[1]) }}</p>
+    <a href="#">Edit</a>
 {% endfor %}
 <p>Total Cost -  ${{ "{:,.2f}".format(total_monthly_cost) }}</p>
 <a href="/">Back to Dashboard</a>

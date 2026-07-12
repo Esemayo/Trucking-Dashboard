@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <body>
+    <h1>Manage Fuel</h1>
+        <a href="{{ url_for('home')}}">Back To Dashboard</a>
+    <h2>Recent Fuel Entries</h2>
+    <table>
+    <tr>
+        <th>Fuel ID</th>
+        <th>Purchase Date</th>
+        <th>Gallons</th>
+        <th>Odometer</th>
+        <th>Cost per Gallon</th>
+    <tr>
+        {% for fuel in fuel_data %}
+    </tr>
+        <td>{{ fuel.fuel_id }}</td>
+        <td>{{ fuel.purchase_date }}</td>
+        <td>{{ "%.2f"|format(fuel.gallons) }}</td>
+        <td>{{ fuel.odometer }}</td>
+        <td>{{ "%.2f"|format(fuel.cost_per_gallon) }}</td>
+        <td><a href="#">Edit</a></td>
+        {% endfor %}
