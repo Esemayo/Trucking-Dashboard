@@ -79,7 +79,7 @@ def create_expense_table(conn):
     #cursor.execute("DROP TABLE IF EXISTS expenses;")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS expenses(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            expense_id INTEGER PRIMARY KEY AUTOINCREMENT,
             expense_name TEXT,
             monthly_cost REAL,
             UNIQUE(expense_name)
@@ -100,22 +100,65 @@ def insert_expense(conn, expense_name, monthly_cost):
     VALUES(?, ?)
     """, values)
     conn.commit()
-def update_load(conn, load_id, load_type, miles, rate):
+def update_load(conn, load_id, date, load_type, load_sequence, miles, rate, rate_per_mile, net_profit_per_mile):
     cursor =conn.cursor()
     values = (
+        date,
         load_type,
+        load_sequence,
         miles,
         rate,
+        rate_per_mile,
+        net_profit_per_mile,
         load_id
     )
     cursor.execute("""
         UPDATE loads
         SET 
+            date = ?,
             load_type = ?,
+            load_sequence = ?,
             miles = ?,
-            rate = ?
+            rate = ?,
+            rate_per_mile = ?,
+            net_profit_per_mile = ?
             
         WHERE load_id = ? 
             """, values)
     conn.commit()
-    #Todo continue adding all the load values we want changed and begin working on our editing route🤌
+def update_fuel(conn, fuel_id, purchase_date, gallons, total_cost, odometer, cost_per_gallon):
+    cursor = conn.cursor()
+    values = (
+        purchase_date,
+        gallons,
+        total_cost,
+        odometer,
+        cost_per_gallon,
+        fuel_id
+    )
+    cursor.execute("""
+        UPDATE fuel_purchases
+        SET 
+            purchase_date = ?,
+            gallons = ?,
+            total_cost = ?,
+            odometer = ?,
+            cost_per_gallon = ?
+        WHERE fuel_id = ?
+                   """, values)
+    conn.commit()
+def update_expenses(conn, expense_id, expense_name, monthly_cost):
+    cursor = conn.cursor()
+    values = (
+        expense_name,
+        monthly_cost,
+        expense_id
+    )
+    cursor.execute("""
+        UPDATE expenses
+        SET
+            expense_name = ?,
+            monthly_cost = ?
+        WHERE expense_id = ?
+                    """, values)
+    conn.commit()

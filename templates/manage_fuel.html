@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<h1>Manage Fuel</h1>
+<style>
+    body {
+        background-color: #121212;
+        color: #f5f5f5;
+    }
+    table {
+        color: #f5f5f5;
+    }
+    table {
+        border-collapse: collapse;
+    }
+    th, td{
+        padding: 16px 10px;
+    }
+    td:nth-child(5),td:nth-child(6) {
+        text-align: right;
+    }
+    th:nth-child(5),th:nth-child(6) {
+        text-align: right;
+    }
+    .edit-button {
+        display: inline-block;
+        padding: 6px 12px;
+        background-color: #4CAF50;
+        color: white;
+        text-decoration: none;
+        border-radius:6px
+    }
+    .edit-button:hover {
+        background-color: #45a049;
+    }
+</style>
+    <body>
+        <a href="{{ url_for('home')}}">Back To Dashboard</a>
+    <h2>Recent Fuel Entries</h2>
+    <table>
+    <tr>
+    
+        <th>Fuel ID</th>
+        <th>Purchase Date</th>
+        <th>Gallons</th>
+        <th>Total Cost</th>
+        <th>Odometer</th>
+        <th>Cost per Gallon</th>
+    <tr>
+    {% for fuel in fuel_data %}
+    <tr>
+        <td>{{ fuel.fuel_id }}</td>
+        <td>{{ fuel.purchase_date }}</td>
+        <td>{{ "%.2f"|format(fuel.gallons) }}</td>
+        <td>{{ "%.2f"|format(fuel.total_cost) }}</td>
+        <td>{{ fuel.odometer }}</td>
+        <td>{{ "%.2f"|format(fuel.cost_per_gallon) }}</td>
+        <td><a href="{{ url_for('edit_fuel', fuel_id=fuel.fuel_id)}}"
+        class="edit-button">
+            Edit
+        </a>
+    </td>
+    </tr>        
+    {% endfor %}

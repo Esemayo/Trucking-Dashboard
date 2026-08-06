@@ -1,8 +1,8 @@
 from flask import Flask, render_template, redirect, url_for, request
-from src.query import get_recent_loads, daily_summary, get_load_performance, recent_fuel_mpg, get_next_load_sequence, total_expense, get_all_expenses, get_recent_fuel, get_load_by_id
+from src.query import get_recent_loads, daily_summary, get_load_performance, recent_fuel_mpg, get_next_load_sequence, total_expense, get_all_expenses, get_recent_fuel, get_load_by_id, get_fuel_by_id, get_expense_by_id
 from src.main import run_pipeline
 from src.load_calculator import calculate_test_load
-from src.db import db_connection, create_tables, insert_load, insert_fuel,create_expense_table, insert_expense
+from src.db import db_connection, create_tables, insert_load, insert_fuel,create_expense_table, insert_expense, update_load, update_fuel, update_expenses
 from src.cleaners import clean_row, clean_row_fuel, clean_expense, clean_load
 from src.metrics import load_metrics, get_fuel_cost_per_mile, calculate_cost_per_gallon, get_fixed_cost_per_mile, multi_load_metrics
 import sqlite3
@@ -131,7 +131,7 @@ def add_load():
 @app.route("/loads")
 def loads():
     loads_data = get_recent_loads()
-    return render_template("loads.html", loads_data=loads_data)
+    return render_template("manage_loads.html", loads_data=loads_data)
 @app.route("/add/fuel", methods=["GET", "POST"])
 def add_fuel():
     successful_entry = None
@@ -189,7 +189,6 @@ def add_fuel():
 def edit_load(load_id):
     conn = db_connection()
     load = get_load_by_id(conn, load_id)
-    conn.close()
     form_data = {}
     if request.method == "POST":
         date = request.form.get("date")
@@ -219,27 +218,102 @@ def edit_load(load_id):
                 load_id=load_id,
                 **get_home_data()
             )
-        
+        old_date = load[0]
+        old_sequence = load[2]
+        if cleaned_row["date"] != old_date:
+            cleaned_row["load_sequence"] = get_next_load_sequence(conn, cleaned_row["date"])
+        else:
+            cleaned_row["load_sequence"] = old_sequence
+        fuel_cost_per_mile = get_fuel_cost_per_mile(
+            conn,
+            cleaned_row["date"]
+        )
+        fixed_cpm = get_fixed_cost_per_mile(conn)
+        cleaned_row = load_metrics(cleaned_row, fuel_cost_per_mile, fixed_cpm)
+        update_load(
+            conn,
+            load_id,
+            cleaned_row["date"],
+            cleaned_row["load_type"],
+            cleaned_row["load_sequence"],
+            cleaned_row["miles"],
+            cleaned_row["rate"],
+            cleaned_row["rate_per_mile"],
+            cleaned_row["net_profit_per_mile"],
+        )
+        conn.close()
+        return redirect(url_for("home"))
+
     return render_template(
         "edit_load.html",
         load=load,
         load_id=load_id,
         form_data=form_data
     )
-
-
-#todo use our new form to create .gets to retreive data and use our cleaners to validate 
-# After if its a longer block(cmon man) bring in metrics 
 @app.route("/fuel")
 def fuel():
     fuel_data = get_recent_fuel()
-    return render_template("recent_fuel.html", fuel_data=fuel_data)
-@app.route("/add/fuel", methods=["GET", "POST"])
+    return render_template("manage_fuel.html", fuel_data=fuel_data)
+@app.route("/edit/fuel/<int:fuel_id>", methods=["GET", "POST"])
+def edit_fuel(fuel_id):
+    conn = db_connection()
+    fuel = get_fuel_by_id(conn, fuel_id)
+    form_data = {}
+    purchase_date = request.form.get("purchase_date")
+    gallons = request.form.get("gallons")
+    total_cost = request.form.get("total_cost")
+    odometer = request.form.get("odometer")
+    if request.method=="POST":
+        purchase_date = request.form.get("purchase_date")
+        gallons = request.form.get("gallons")
+        total_cost = request.form.get("total_cost")
+        odometer = request.form.get("odometer")
+        form_data = {
+            "purchase_date": purchase_date,
+            "gallons": gallons,
+            "total_cost": total_cost,
+            "odometer": odometer
+        }
+        row = {
+            "purchase_date": purchase_date,
+            "gallons": gallons,
+            "total_cost": total_cost,
+            "odometer": odometer
+        }
+        cleaned_row_fuel, errors = clean_row_fuel(row)
+        print(cleaned_row_fuel)
+        if errors:
+            print("Error:", errors)
+            return render_template(
+                "edit_fuel.html",
+                fuel=fuel,
+                fuel_id=fuel_id,
+                form_data=form_data,
+                errors=errors,
+                **get_home_data()
+            )
+        cleaned_row_fuel = calculate_cost_per_gallon(cleaned_row_fuel) 
+        update_fuel(
+            conn,
+            fuel_id,
+            cleaned_row_fuel["purchase_date"],
+            cleaned_row_fuel["gallons"],
+            cleaned_row_fuel["total_cost"],
+            cleaned_row_fuel["odometer"],
+            cleaned_row_fuel["cost_per_gallon"],
+        )
+    return render_template(
+        "edit_fuel.html",
+        fuel=fuel,
+        fuel_id=fuel_id,
+        form_data=form_data
+    )
 @app.route("/set/expenses", methods=["GET", "POST"])
 def set_expenses():
     if request.method=="POST":
         expense_name = request.form.get("expense_name")
         monthly_cost = request.form.get("monthly_cost")
+        expense_id = request.form.get("expense_id")
         expense_name, monthly_cost, errors = clean_expense(
             expense_name,
             monthly_cost
@@ -256,6 +330,19 @@ def set_expenses():
                 **get_home_data()
             )
         conn = db_connection()
+        if expense_id is not None:
+            update_expenses(conn, expense_id, expense_name, monthly_cost)
+            expenses = get_all_expenses(conn)
+            total_monthly_cost = total_expense(conn)
+            conn.close()
+            return render_template(
+            "set_expenses.html",
+            error=None,
+            expenses=expenses,
+            total_monthly_cost=total_monthly_cost,
+            form_data={},
+            expense_id=expense_id
+        )
         try:
             create_expense_table(conn)
             insert_expense(conn, expense_name, monthly_cost)
@@ -269,12 +356,28 @@ def set_expenses():
                 error="Expense was repeated",
                 expenses=expenses,
                 total_monthly_cost=total_monthly_cost,
-                form_data=form_data,
+                form_data=form_data
                 **get_home_data()
-                )
+            )
     conn = db_connection()
     expenses = get_all_expenses(conn)
     total_monthly_cost = total_expense(conn)
+    expense_id = request.args.get("expense_id", type=int)
+    if expense_id is not None:
+        expense = get_expense_by_id(conn, expense_id)
+        form_data = {
+            "expense_name": expense[1],
+            "monthly_cost": expense[2]
+        }
+        print(form_data)
+        return render_template(
+            "set_expenses.html",
+            error=None,
+            expenses=expenses,
+            total_monthly_cost=total_monthly_cost,
+            form_data=form_data,
+            expense_id=expense_id
+        )
     conn.close()
     return render_template(
         "set_expenses.html",
@@ -283,6 +386,8 @@ def set_expenses():
         total_monthly_cost=total_monthly_cost,
         form_data={}
         )
+#To Do create oour editing mode block in set expenses 
+
 def get_home_data():
     summary_data = daily_summary()
     date, total_profit, daily_miles, load_count, avg_profit_per_mile = summary_data
@@ -311,6 +416,9 @@ def get_home_data():
     }
 @app.route("/")
 def home():
+    conn = db_connection()
+    create_tables(conn)
+    create_expense_table(conn)
     return render_template(
         "index.html",
         calc_result=None,

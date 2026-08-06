@@ -7,6 +7,17 @@
       font-family: Arial, sans-serif;
       padding: 40px;
     }
+    .edit-button {
+        display: inline-block;
+        padding: 6px 12px;
+        background-color: #4CAF50;
+        color: white;
+        text-decoration: none;
+        border-radius:6px
+    }
+    .edit-button:hover {
+        background-color: #45a049;
+    }
 </style>
   <body>
   
@@ -17,6 +28,7 @@
 </p>
 
 <form method="POST" action="{{ url_for('set_expenses') }}">
+  <input type="hidden" name ="expense_id" value="{{ expense_id }}"
   <label for="expense_name">Monthly expense name</label>
   <input type="text" name="expense_name" id="expense_name" placeholder="Truck payment" required value="{{form_data.get('expense_name', '')}}">
 
@@ -30,8 +42,11 @@
   <button type="submit">Add monthly expense</button>
 </form>
 {% for expense in expenses %}
-    <p>{{ expense[0] }} - ${{ "{:,.2f}".format(expense[1]) }}</p>
-    <a href="#">Edit</a>
+    <p>{{ expense[0] }} {{ expense[1] }}- ${{ "{:,.2f}".format(expense[2]) }}</p>
+    <a href="{{url_for('set_expenses', expense_id=expense[0])}}"
+        class="edit-button">
+            Edit
+        </a>
 {% endfor %}
 <p>Total Cost -  ${{ "{:,.2f}".format(total_monthly_cost) }}</p>
 <a href="/">Back to Dashboard</a>

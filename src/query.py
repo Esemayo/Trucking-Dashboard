@@ -112,7 +112,7 @@ def get_recent_fuel():
     conn = sqlite3.connect("data/trucking.db")
     cursor = conn.cursor()
     cursor.execute("""
-    SELECT fuel_id, purchase_date, gallons, odometer, cost_per_gallon
+    SELECT fuel_id, purchase_date, gallons, total_cost, odometer, cost_per_gallon
     FROM fuel_purchases
     ORDER BY purchase_date DESC
     LIMIT 10;
@@ -120,11 +120,12 @@ def get_recent_fuel():
     rows = cursor.fetchall()
     fuel_data = []
     for row in rows:
-        fuel_id, purchase_date, gallons, odometer, cost_per_gallon = row
+        fuel_id, purchase_date, gallons, total_cost, odometer, cost_per_gallon = row
         fuel_data.append({
             "fuel_id": fuel_id,
             "purchase_date": purchase_date,
             "gallons": gallons,
+            "total_cost": total_cost,
             "odometer": odometer,
             "cost_per_gallon": cost_per_gallon
         })
@@ -156,7 +157,7 @@ def total_expense(conn):
 def get_all_expenses(conn):
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT expense_name, monthly_cost
+        SELECT expense_id, expense_name, monthly_cost
         FROM expenses
     """)
     results = cursor.fetchall()
@@ -165,9 +166,29 @@ def get_load_by_id(conn, load_id):
     cursor =conn.cursor()
     values = (load_id,)
     cursor.execute("""
-        SELECT date, load_type, miles, rate
+        SELECT date, load_type, load_sequence, miles, rate
         FROM loads
         WHERE load_id = ?            
     """, values)
+    results = cursor.fetchone()
+    return results
+def get_fuel_by_id(conn, fuel_id):
+    cursor = conn.cursor()
+    values = (fuel_id,)
+    cursor.execute("""
+        SELECT purchase_date, gallons, total_cost, odometer
+        FROM fuel_purchases
+        WHERE fuel_id = ? 
+                   """, values)
+    results = cursor.fetchone()
+    return results
+def get_expense_by_id(conn, expense_id):
+    cursor = conn.cursor()
+    values = (expense_id,)
+    cursor.execute("""
+        SELECT expense_id, expense_name, monthly_cost
+        FROM expenses
+        WHERE expense_id = ?
+                """, values)
     results = cursor.fetchone()
     return results

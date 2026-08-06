@@ -1,5 +1,37 @@
 <!DOCTYPE html>
 <html>
+<style>
+    body {
+        background-color: #121212;
+        color: #f5f5f5;
+    }
+    table {
+        color: #f5f5f5;
+    }
+    table {
+        border-collapse: collapse;
+    }
+    th, td{
+        padding: 16px 10px;
+    }
+    td:nth-child(5),td:nth-child(6) {
+        text-align: right;
+    }
+    th:nth-child(5),th:nth-child(6) {
+        text-align: right;
+    }
+    .edit-button {
+        display: inline-block;
+        padding: 6px 12px;
+        background-color: #4CAF50;
+        color: white;
+        text-decoration: none;
+        border-radius:6px
+    }
+    .edit-button:hover {
+        background-color: #45a049;
+    }
+</style>
     <body>
         <h1>Manage Loads</h1>
         <a href="{{ url_for('home')}}">Back To Dashboard</a>
@@ -26,7 +58,11 @@
         <td>{{ "%.2f"|format(load.rate) }}</td>
         <td>{{ "%.2f"|format(load.ppm) }}</td>
         <td>{{ load.status }}</td>
-        <td><a href="{{ url_for('edit_load', load_id=load.load_id)}}">Edit</a></td>
+        <td><a href="{{ url_for('edit_load', load_id=load.load_id)}}"
+            class="edit-button">
+            Edit
+        </a>
+    </td>
     </tr>
     {% endfor %}
 
