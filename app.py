@@ -302,6 +302,8 @@ def edit_fuel(fuel_id):
             cleaned_row_fuel["odometer"],
             cleaned_row_fuel["cost_per_gallon"],
         )
+        conn.close()
+        return redirect(url_for("home"))
     return render_template(
         "edit_fuel.html",
         fuel=fuel,
@@ -323,9 +325,15 @@ def set_expenses():
             "monthly_cost": monthly_cost
         }
         if errors:
+            conn = db_connection()
+            expenses = get_all_expenses(conn)
+            total_monthly_cost = total_expense(conn)
+            conn.close()
             return render_template(
                 "set_expenses.html",
                 error=errors[0],
+                expenses=expenses,
+                total_monthly_cost=total_monthly_cost,
                 form_data=form_data,
                 **get_home_data()
             )
@@ -356,7 +364,7 @@ def set_expenses():
                 error="Expense was repeated",
                 expenses=expenses,
                 total_monthly_cost=total_monthly_cost,
-                form_data=form_data
+                form_data=form_data,
                 **get_home_data()
             )
     conn = db_connection()
@@ -369,7 +377,6 @@ def set_expenses():
             "expense_name": expense[1],
             "monthly_cost": expense[2]
         }
-        print(form_data)
         return render_template(
             "set_expenses.html",
             error=None,
@@ -386,7 +393,8 @@ def set_expenses():
         total_monthly_cost=total_monthly_cost,
         form_data={}
         )
-#To Do create oour editing mode block in set expenses 
+#To Do confirm why odometer roll back passes when editing fuel 
+#To Do set up flash messages for succesful edits to provide feedback to user
 
 def get_home_data():
     summary_data = daily_summary()

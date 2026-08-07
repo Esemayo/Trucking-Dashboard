@@ -7,6 +7,12 @@
       font-family: Arial, sans-serif;
       padding: 40px;
     }
+    .form-layout {
+        display: flex;
+        gap: 40px;
+        align-items: flex-start;
+
+    }
     .edit-button {
         display: inline-block;
         padding: 6px 12px;
@@ -18,6 +24,11 @@
     .edit-button:hover {
         background-color: #45a049;
     }
+    .error-message {
+        color: red;
+        font-weight: bold;
+        max-width: 300px;
+    }
 </style>
   <body>
   
@@ -26,9 +37,9 @@
   Add recurring business expenses here. These should be monthly costs like truck payment,
   insurance, ELD, permits, software, and maintenance budget.
 </p>
-
-<form method="POST" action="{{ url_for('set_expenses') }}">
-  <input type="hidden" name ="expense_id" value="{{ expense_id }}"
+<div class="form-layout">
+  <form method="POST" action="{{ url_for('set_expenses') }}">
+  <input type="hidden" name ="expense_id" value="{{ expense_id }}">
   <label for="expense_name">Monthly expense name</label>
   <input type="text" name="expense_name" id="expense_name" placeholder="Truck payment" required value="{{form_data.get('expense_name', '')}}">
 
@@ -40,13 +51,23 @@
   <br><br>
 
   <button type="submit">Add monthly expense</button>
-</form>
+  </form>
+  <br><br>
+          <div class="error-message">
+              {% if error %}
+              <h3>🚨 Please Fix the Following: </h3>
+                      <p>{{ error }}</p>
+              {% endif %}
+  </div>
+</div>
+<div class="expense-list"
 {% for expense in expenses %}
-    <p>{{ expense[0] }} {{ expense[1] }}- ${{ "{:,.2f}".format(expense[2]) }}</p>
-    <a href="{{url_for('set_expenses', expense_id=expense[0])}}"
-        class="edit-button">
-            Edit
-        </a>
-{% endfor %}
+      <p>{{ expense[0] }} {{ expense[1] }}- ${{ "{:,.2f}".format(expense[2]) }}</p>
+      <a href="{{url_for('set_expenses', expense_id=expense[0])}}"
+          class="edit-button">
+              Edit
+          </a>
+  {% endfor %}
 <p>Total Cost -  ${{ "{:,.2f}".format(total_monthly_cost) }}</p>
+</div>
 <a href="/">Back to Dashboard</a>
