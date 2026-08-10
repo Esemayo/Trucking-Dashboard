@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, render_template, redirect, url_for, request, flash
 from src.query import get_recent_loads, daily_summary, get_load_performance, recent_fuel_mpg, get_next_load_sequence, total_expense, get_all_expenses, get_recent_fuel, get_load_by_id, get_fuel_by_id, get_expense_by_id
 from src.main import run_pipeline
 from src.load_calculator import calculate_test_load
@@ -241,6 +241,7 @@ def edit_load(load_id):
             cleaned_row["rate_per_mile"],
             cleaned_row["net_profit_per_mile"],
         )
+        flash("Load update successfully", "load")
         conn.close()
         return redirect(url_for("home"))
 
@@ -281,7 +282,6 @@ def edit_fuel(fuel_id):
             "odometer": odometer
         }
         cleaned_row_fuel, errors = clean_row_fuel(row)
-        print(cleaned_row_fuel)
         if errors:
             print("Error:", errors)
             return render_template(
@@ -302,6 +302,7 @@ def edit_fuel(fuel_id):
             cleaned_row_fuel["odometer"],
             cleaned_row_fuel["cost_per_gallon"],
         )
+        flash("Fuel update successfully", "fuel")
         conn.close()
         return redirect(url_for("home"))
     return render_template(
@@ -393,8 +394,7 @@ def set_expenses():
         total_monthly_cost=total_monthly_cost,
         form_data={}
         )
-#To Do confirm why odometer roll back passes when editing fuel 
-#To Do set up flash messages for succesful edits to provide feedback to user
+#To Do Add a delete option to our load, fuel, and expenses pages
 
 def get_home_data():
     summary_data = daily_summary()
