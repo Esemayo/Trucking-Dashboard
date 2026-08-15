@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+    <h1>Delete Fuel</h1>
+    <style>
+        body{
+            background: #111827;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 40px;
+        }
+        .fuel-row{
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 16px 0;
+            max-width: 420px;
+            background-color: #1f2937;
+        }
+        .button-section{
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .cancel-button {
+        display: inline-block;
+        padding: 6px 12px;
+        background-color: #3b82f6;
+        color: white;
+        text-decoration: none;
+        border-radius:6px
+        }
+        .cancel-button:hover {
+            background-color: #2563eb;
+        }
+        .confirm-button {
+            display: inline-block;
+            padding: 6px 12px;
+            background-color: #b91c1c;
+            color: white;
+            text-decoration: none;
+            border-radius:6px
+        }
+        .confirm-button:hover {
+            background-color: #dc2626;
+        }
+    </style>
+    <body>
+    <div class="fuel-row">
+        <p>Purchase Date: {{fuel[0]}}</p>
+        <p>Gallons: {{fuel[1]}}</p>
+        <p>Total Cost: {{fuel[2]}}</p> 
+        <p>Odometer: {{fuel[3]}}</p>
+    </div>
+    <br>
+    <p>Are you sure you want to Delete?</p>
+    <br>
+    <div class="button-section">
+        <form method="POST" action="{{url_for('delete_fuel', fuel_id=fuel_id) }}">
+            <button type="submit" class="confirm-button">Confirm</button>
+        </form>
+        <a href="{{ url_for('fuel')}}" class="cancel-button">Cancel</a>
+    </div>
+    </body>

@@ -162,3 +162,27 @@ def update_expenses(conn, expense_id, expense_name, monthly_cost):
         WHERE expense_id = ?
                     """, values)
     conn.commit()
+def delete_load_entry(conn, load_id):
+    cursor = conn.cursor()
+    value = (load_id,)
+    cursor.execute("""
+        DELETE from loads
+        WHERE load_id = ?
+                   """, value)
+    conn.commit()
+def delete_fuel_entry(conn, fuel_id):
+    cursor = conn.cursor()
+    value = (fuel_id,)
+    cursor.execute("""
+        DELETE from fuel_purchases
+        WHERE fuel_id = ?
+                   """, value)
+    conn.commit()
+def delete_expense_entry(conn, expense_id):
+    cursor = conn.cursor()
+    value = (expense_id,)
+    cursor.execute("""
+        DELETE from expenses
+        WHERE expense_id = ?
+                   """, value)
+    conn.commit()

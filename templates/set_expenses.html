@@ -24,6 +24,17 @@
     .edit-button:hover {
         background-color: #45a049;
     }
+    .delete-button {
+        display: inline-block;
+        padding: 6px 12px;
+        background-color: #b91c1c;
+        color: white;
+        text-decoration: none;
+        border-radius:6px
+    }
+    .delete-button:hover {
+        background-color: #dc2626;
+    }
     .error-message {
         color: red;
         font-weight: bold;
@@ -63,11 +74,31 @@
 <div class="expense-list"
 {% for expense in expenses %}
       <p>{{ expense[0] }} {{ expense[1] }}- ${{ "{:,.2f}".format(expense[2]) }}</p>
-      <a href="{{url_for('set_expenses', expense_id=expense[0])}}"
+      <a href="{{url_for('set_expenses', expense_id=expense[0], action='edit')}}"
           class="edit-button">
               Edit
           </a>
-  {% endfor %}
+      <a href="{{url_for('set_expenses', expense_id=expense[0], action='delete')}}"
+          class="delete-button">
+              Delete
+        </a>
+{% endfor %}
+{% if delete_expense %}
+     <p>Delete {{ delete_expense[1] }}?</p>
+     <p>Monthly cost: ${{ delete_expense[2] }}</p>
+      <form method ="POST" action="{{ url_for('set_expenses') }}">
+          <input type="hidden" name="expense_id" value="{{ expense_id }}">
+          <button 
+              type="submit"
+              name="action" 
+              value="confirm_delete" 
+              class="confirm-button">
+              Confirm
+            </button>
+          </form>
+        <a href="{{ url_for('set_expenses')}}" class="cancel-button">Cancel</a>
+{% endif%} 
 <p>Total Cost -  ${{ "{:,.2f}".format(total_monthly_cost) }}</p>
 </div>
+</body>
 <a href="/">Back to Dashboard</a>

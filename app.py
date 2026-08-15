@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, url_for, request, flash
 from src.query import get_recent_loads, daily_summary, get_load_performance, recent_fuel_mpg, get_next_load_sequence, total_expense, get_all_expenses, get_recent_fuel, get_load_by_id, get_fuel_by_id, get_expense_by_id
 from src.main import run_pipeline
 from src.load_calculator import calculate_test_load
-from src.db import db_connection, create_tables, insert_load, insert_fuel,create_expense_table, insert_expense, update_load, update_fuel, update_expenses
+from src.db import db_connection, create_tables, insert_load, insert_fuel,create_expense_table, insert_expense, update_load, update_fuel, update_expenses, delete_fuel_entry, delete_load_entry, delete_expense_entry
 from src.cleaners import clean_row, clean_row_fuel, clean_expense, clean_load
 from src.metrics import load_metrics, get_fuel_cost_per_mile, calculate_cost_per_gallon, get_fixed_cost_per_mile, multi_load_metrics
 import sqlite3
@@ -311,12 +311,58 @@ def edit_fuel(fuel_id):
         fuel_id=fuel_id,
         form_data=form_data
     )
+@app.route('/delete/load/<int:load_id>', methods=["GET", "POST"])
+def delete_load(load_id):
+    conn = db_connection()
+    load = get_load_by_id(conn, load_id)
+    if request.method=="POST":
+        delete_load_entry(conn, load_id)
+        flash("Load entry deleted", "load")
+        conn.close()
+        return redirect(url_for("home"))
+    return render_template(
+        "delete_load.html",
+        load=load,
+        load_id=load_id
+    ) 
+@app.route("/delete/fuel/<int:fuel_id>", methods=["GET", "POST"])
+def delete_fuel(fuel_id):
+    conn = db_connection()
+    fuel = get_fuel_by_id(conn, fuel_id)
+    if request.method=="POST":
+        delete_fuel_entry(conn, fuel_id)
+        flash("Fuel entry deleted", "fuel")
+        conn.close()
+        return redirect(url_for("home"))
+    return render_template(
+        "delete_fuel.html",
+        fuel=fuel,
+        fuel_id=fuel_id
+    ) 
+
+# To Do cleanup ui for the delete expense feature
 @app.route("/set/expenses", methods=["GET", "POST"])
 def set_expenses():
     if request.method=="POST":
+        action = request.form.get("action")
         expense_name = request.form.get("expense_name")
         monthly_cost = request.form.get("monthly_cost")
         expense_id = request.form.get("expense_id")
+        if action == "confirm_delete":
+            conn = db_connection()
+            expense_id = request.form.get("expense_id", type=int)
+            delete_expense_entry(conn, expense_id)
+            expenses = get_all_expenses(conn)
+            total_monthly_cost = total_expense(conn)
+            conn.close()
+            return render_template(
+                "set_expenses.html",
+                error=None,
+                expenses=expenses,
+                total_monthly_cost=total_monthly_cost,
+                form_data={},
+                expense_id=expense_id
+                )
         expense_name, monthly_cost, errors = clean_expense(
             expense_name,
             monthly_cost
@@ -340,18 +386,20 @@ def set_expenses():
             )
         conn = db_connection()
         if expense_id is not None:
-            update_expenses(conn, expense_id, expense_name, monthly_cost)
-            expenses = get_all_expenses(conn)
-            total_monthly_cost = total_expense(conn)
-            conn.close()
-            return render_template(
-            "set_expenses.html",
-            error=None,
-            expenses=expenses,
-            total_monthly_cost=total_monthly_cost,
-            form_data={},
-            expense_id=expense_id
-        )
+            action = request.args.get("action")
+            if action == "edit":
+                update_expenses(conn, expense_id, expense_name, monthly_cost)
+                expenses = get_all_expenses(conn)
+                total_monthly_cost = total_expense(conn)
+                conn.close()
+                return render_template(
+                    "set_expenses.html",
+                    error=None,
+                    expenses=expenses,
+                    total_monthly_cost=total_monthly_cost,
+                    form_data={},
+                    expense_id=expense_id
+                    )
         try:
             create_expense_table(conn)
             insert_expense(conn, expense_name, monthly_cost)
@@ -372,21 +420,35 @@ def set_expenses():
     expenses = get_all_expenses(conn)
     total_monthly_cost = total_expense(conn)
     expense_id = request.args.get("expense_id", type=int)
+    action = request.args.get("action")
     if expense_id is not None:
-        expense = get_expense_by_id(conn, expense_id)
-        form_data = {
-            "expense_name": expense[1],
-            "monthly_cost": expense[2]
-        }
-        return render_template(
-            "set_expenses.html",
-            error=None,
-            expenses=expenses,
-            total_monthly_cost=total_monthly_cost,
-            form_data=form_data,
-            expense_id=expense_id
-        )
-    conn.close()
+        if action == "edit":
+            expense = get_expense_by_id(conn, expense_id)
+            conn.close()
+            form_data = {
+                "expense_name": expense[1],
+                "monthly_cost": expense[2]
+            }
+            return render_template(
+                "set_expenses.html",
+                error=None,
+                expenses=expenses,
+                total_monthly_cost=total_monthly_cost,
+                form_data=form_data,
+                expense_id=expense_id
+            )
+        elif action == "delete":
+            expense = get_expense_by_id(conn, expense_id)
+            conn.close()
+            return render_template(
+                "set_expenses.html",
+                error=None,
+                expenses=expenses,
+                total_monthly_cost=total_monthly_cost,
+                form_data={},
+                delete_expense=expense,
+                expense_id=expense_id
+            )
     return render_template(
         "set_expenses.html",
         error=None,
@@ -394,8 +456,6 @@ def set_expenses():
         total_monthly_cost=total_monthly_cost,
         form_data={}
         )
-#To Do Add a delete option to our load, fuel, and expenses pages
-
 def get_home_data():
     summary_data = daily_summary()
     date, total_profit, daily_miles, load_count, avg_profit_per_mile = summary_data

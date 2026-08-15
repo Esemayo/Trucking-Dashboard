@@ -31,6 +31,17 @@
     .edit-button:hover {
         background-color: #45a049;
     }
+    .delete-button {
+        display: inline-block;
+        padding: 6px 12px;
+        background-color: #b91c1c;
+        color: white;
+        text-decoration: none;
+        border-radius:6px
+    }
+    .delete-button:hover {
+        background-color: #dc2626;
+    }
 </style>
     <body>
         <h1>Manage Loads</h1>
@@ -63,6 +74,10 @@
             Edit
         </a>
     </td>
+    <td><a href="{{ url_for('delete_load', load_id=load.load_id) }}" class="delete-button">
+                Delete
+            </a>
+        </td>
     </tr>
     {% endfor %}
 
